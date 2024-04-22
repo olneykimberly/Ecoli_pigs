@@ -1,0 +1,38 @@
+{
+    "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
+    "pipseeker_dir" : "../pipseeker_output/", 
+    "results" : "../results/",
+    "rObjects" : "../rObjects/",
+    "fastq_path" : "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/PIPseq_snRNAseq/2024_Brain/usftp21.novogene.com/01.RawData/",
+
+    "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
+    "Sus.scrofa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask_filtered_gtf/",
+
+    "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
+    "sample_names": ['E2A', 'E2B'],
+    "read": ['R1', 'R2'],
+
+    "E2A":{
+        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/PIPseq_snRNAseq/2024_Brain/usftp21.novogene.com/",
+        "fq": "01.RawData/E2A/E2A_CKDL240011999-1A_22JTHGLT3_L1",
+        "shortName1": "E2A_R1",
+        "shortName2": "E2A_R2",
+        "ID": "E2A",
+        "SM": "E2A",
+        "PU": "22JTHGLT3.20195",
+        "LB": "E2A",
+        "PL": "Illumina"
+        },
+
+    "E2B":{
+        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/PIPseq_snRNAseq/2024_Brain/usftp21.novogene.com/",
+        "fq": "01.RawData/E2B/E2B_CKDL240012000-1A_22JTHGLT3_L1",
+        "shortName1": "E2B_R1",
+        "shortName2": "E2B_R2",
+        "ID": "E2B",
+        "SM": "E2B",
+        "PU": "22JTHGLT3.20195",
+        "LB": "E2B",
+        "PL": "Illumina"
+        }
+}
