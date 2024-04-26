@@ -1,6 +1,7 @@
 {
     "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
     "pipseeker_dir" : "../pipseeker_output/", 
+    "cellbender_dir" : "../cellbender/",
     "results" : "../results/",
     "rObjects" : "../rObjects/",
     "fastq_path" : "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/PIPseq_snRNAseq/2024_Brain/usftp21.novogene.com/01.RawData/",

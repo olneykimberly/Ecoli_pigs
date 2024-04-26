@@ -1,0 +1,546 @@
+---
+title: "doublet removal"
+author: "Kimberly Olney, PhD"
+date: "04/26/2024"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+Read in processed filtered data.
+Remove doublets and reprocess. Check resolutions and save object. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(root.dir = ".", echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+# Libraris, paths, colors
+```{r echo=FALSE, message=FALSE}
+library(reshape2)
+source(here::here("snRNAseq/scripts/", "file_paths_and_colours.R"))
+Sys.setenv(RSTUDIO_PANDOC="/usr/local/biotools/pandoc/3.1.2/bin")
+
+treatment <- "E2B"
+color.panel <- dittoColors()
+```
+
+# Read in object
+```{r read_object}
+# read object
+dataObject <- readRDS(file = paste0("../rObjects/", treatment, "_unannotated.rds"))
+DefaultAssay(dataObject) <- "RNA"
+dataObject <- NormalizeData(dataObject)
+dataObject <- FindVariableFeatures(dataObject)
+dataObject <- ScaleData(dataObject)
+dataObject <- JoinLayers(dataObject)
+
+# inspect
+dataObject
+```
+
+# Unannotated 
+### UMAP
+```{r unannotated_umap}
+ditto_umap <- dittoDimPlot(object = dataObject,
+             var = "seurat_clusters",
+             reduction.use = "umap",
+             do.label = TRUE,
+             labels.highlight = TRUE)
+ditto_umap
+```
+```{r save_umap}
+path <- paste0("../results/UMAP/unannotated/",treatment,
+               "_UMAP_unannotated")
+ditto_umap
+saveToPDF(paste0(path, ".pdf"), width = 5.5, height = 4)
+```
+
+### Nuclei count per cluster
+```{r count_per_cluster}
+count_per_cluster <- FetchData(dataObject,
+                               vars = c("ident", "orig.ident")) %>%
+  dplyr::count(ident, orig.ident) %>%
+  tidyr::spread(ident, n)
+count_per_cluster
+
+count_melt <- reshape2::melt(count_per_cluster)
+colnames(count_melt) <- c("ident", "cluster", "number of nuclei")
+count_max <- count_melt[which.max(count_melt$`number of nuclei`), ]
+count_max_value <- count_max$`number of nuclei`
+cellmax <- count_max_value + 200 # so that the figure doesn't cut off the text
+count_bar <- ggplot(count_melt, aes(x = factor(cluster), y = `number of nuclei`, fill = `ident`)) +
+  geom_bar(
+    stat = "identity",
+    colour = "black",
+    width = 1,
+    position = position_dodge(width = 0.8)
+  ) +
+  geom_text(
+    aes(label = `number of nuclei`),
+    position = position_dodge(width = 0.9),
+    vjust = -0.25,
+    angle = 45,
+    hjust = -.01
+  ) +
+  theme_classic() + scale_fill_manual(values = sample_colors) +
+  ggtitle("Number of nuclei per cluster") +  xlab("cluster") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(limits = c(0, cellmax))
+count_bar
+```
+
+```{r save_count_bar}
+# save
+path <- paste0("../results/UMAP/unannotated/", treatment,
+               "_unannotated_nuclei_count_per_cluster")
+count_bar
+saveToPDF(paste0(path, ".pdf"), width = 5.5, height = 4)
+```
+
+### Cluster tree
+```{r cluster_tree}
+dataObject <- BuildClusterTree(
+  object = dataObject,
+  dims = 1:30,
+  reorder = FALSE,
+  reorder.numeric = FALSE
+)
+
+tree <- dataObject@tools$BuildClusterTree
+tree$tip.label <- paste0("Cluster ", tree$tip.label)
+nClusters <- length(tree$tip.label)
+
+tree_graph <- ggtree::ggtree(tree, aes(x, y)) +
+  scale_y_reverse() +
+  ggtree::geom_tree() +
+  ggtree::theme_tree() +
+  ggtree::geom_tiplab(offset = 1) +
+  ggtree::geom_tippoint(color = color.panel[1:nClusters],
+                        shape = 16,
+                        size = 5) +
+  coord_cartesian(clip = 'off') +
+  theme(plot.margin = unit(c(0, 2.5, 0, 0), 'cm'))
+tree_graph
+```
+
+```{r save_tree}
+# save
+path <- paste0("../results/UMAP/unannotated/", treatment,
+               "_unannotated_tree")
+tree_graph
+saveToPDF(paste0(path, ".pdf"), width = 5.5, height = 4)
+```
+
+## Violins
+```{r violins}
+# Astrocytes
+VlnPlot(dataObject,
+        features = c("AQP4","CLU", "GFAP"))
+# Oligodendrocyte
+VlnPlot(dataObject,
+        features = c("PLP1","MBP", "MOG"))
+# OPC
+VlnPlot(dataObject,
+        features = c("PDGFRA", "VCAN", "TNR"))
+```
+
+### DotPlot
+```{r dotPlot}
+markers.to.plot <-
+  c(
+"CLU", 
+"GFAP", 
+"AQP4", 
+"GJA1",
+"CLDN5", 
+"ADGRF5", 
+"FLT1",
+"COL1A1", 
+"COL1A2", 
+"DCN",
+"HEXB", 
+"C1QA", 
+"C1QC", 
+"C1QB", 
+"TMEM119", 
+"ITGAM", 
+"TYROBP",
+"P2RY12", 
+"AIF1",
+"RBFOX3", 
+"SNAP25",
+"SYT1", 
+"GAD1", 
+"GAD2",
+"PLP1",
+"MBP", 
+"MOG",
+"OLIG1",
+"PDGFRA", 
+"VCAN", 
+"TNR",
+"ACTA2",
+"RGS5", 
+"VTN", 
+"MYL5"
+  )
+
+dot_ind <- DotPlot(dataObject, 
+                   features = markers.to.plot, 
+                   cluster.idents = TRUE,
+                   dot.scale = 8) + RotatedAxis()
+dot_ind
+```
+
+```{r save_dotPlot}
+# save
+path <- paste0("../results/dot_plot/", treatment,
+               "_unannotated")
+dot_ind
+saveToPDF(paste0(path, ".pdf"), width = 5.5, height = 4)
+```
+
+# Doublets
+```{r doublet_finder}
+# Assign identity of clusters
+d1 <- DimPlot(
+  dataObject,
+  reduction = "umap",
+  label = TRUE,
+  label.size = 6
+)
+path <-
+  paste0(
+    "../results/doublet_finder/",
+    treatment,
+    "_doubletFinder_UMAP_seurat_clusters"
+  )
+pdf(paste0(path, ".pdf"), width = 7, height = 6)
+print(d1)
+dev.off()
+library(DoubletFinder)
+# number of cells in each cluster
+n_cells <- FetchData(dataObject, vars = c("ident")) %>% dplyr::count(ident) %>% tidyr::spread(ident, n)
+
+## pK Identification (no ground-truth)
+sweep.res.list<- paramSweep(dataObject, PCs = 1:10, sct = TRUE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+
+# Optimal pK for any scRNA-seq data can be manually discerned as maxima in BCmvn distributions
+# visualize 
+ggplot(bcmvn, aes(pK, BCmetric, group = 1)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+pK <- bcmvn %>% # select the pK that corresponds to max bcmvn to optimize doublet detection
+  filter(BCmetric == max(BCmetric)) %>%
+  select(pK) 
+pK <- as.numeric(as.character(pK[[1]]))
+
+## Homotypic Doublet Proportion Estimate 
+annotations <- dataObject@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)      
+## change pK to 0.05 for assuming 5 percent doublet
+nExp_poi <- round(.05*nrow(dataObject@meta.data)) 
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+# Run DoubletFinder with varying classification
+dataObject <- doubletFinder(dataObject, 
+                                  PCs = 1:10, 
+                                  pN = 0.25, 
+                                  pK = pK, 
+                                  nExp = nExp_poi.adj,
+                                  reuse.pANN = FALSE, sct = TRUE)
+
+# set DF class for calling doublets
+DF_class <-
+  dataObject@meta.data[, grep("DF.classifications", colnames(dataObject@meta.data)), ]
+DF_class[which(DF_class == "Doublet")] <- "Doublet"
+table(DF_class)
+# table showing the number of doublets and singlets
+write.table(
+  table(DF_class),
+  paste0(
+    "../results/doublet_finder/",
+    treatment,
+    "_doubletFinder_table.txt"
+  ),
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+dataObject@meta.data[,"CellTypes_DF"] <- DF_class
+
+# plot
+d2 <-
+  DimPlot(
+    dataObject,
+    group.by = "CellTypes_DF",
+    reduction = "umap",
+    cols = c("black","#66C2A5")
+  )
+path <-
+  paste0(
+    "../results/doublet_finder/",
+    treatment,
+    "_doubletFinder_UMAP"
+  )
+pdf(paste0(path, ".pdf"), width = 7, height = 6)
+print(d2)
+dev.off()
+
+
+#only keep singlets and doublets for visual inspection
+data_sample_singlets <-
+  subset(dataObject, subset = CellTypes_DF == "Singlet")
+data_sample_doublets <-
+  subset(dataObject, subset = CellTypes_DF == "Doublet")
+
+# inspect
+d3 <-
+  DimPlot(
+    data_sample_singlets,
+    group.by = "CellTypes_DF",
+    reduction = "umap",
+    #order = c("Coll.Duct.TC", "Doublet"),
+    cols = c("black","#66C2A5"))
+d3
+
+# number of cells in each cluster per and post removing doublets
+n_cells_singlets <-
+  FetchData(data_sample_singlets, vars = c("ident")) %>% dplyr::count(ident) %>% tidyr::spread(ident, n)
+n_cells_singlets
+ncells_per_cluster <- rbind(n_cells, n_cells_singlets)
+row.names(ncells_per_cluster) <-
+  c("Doublets and singlets", "Singlets only")
+ncells_per_cluster
+difference <- diff(as.matrix(ncells_per_cluster))
+difference <- as.data.frame(difference)
+row.names(difference) <- c("difference")
+cbind(difference, ncells_per_cluster)
+write.table(
+  ncells_per_cluster,
+  paste0(
+    "../results/doublet_finder/",
+    treatment,
+    "_doubletFinder_table_per_cluster.txt"
+  ),
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)
+
+# plot the number of cells in each cluster per and post doubletFinder
+ncell_matrix <- as.matrix(ncells_per_cluster)
+ncells_melt <- melt(ncell_matrix)
+colnames(ncells_melt) <-
+  c("doublet type", "cluster", "number of cells")
+ncell_max <- ncells_melt[which.max(ncells_melt$`number of cells`), ]
+ncell_max_value <- ncell_max$`number of cells`
+cellmax <-
+  ncell_max_value + 10 # so that the figure doesn't cut off the text
+b1 <-
+  ggplot(ncells_melt,
+         aes(
+           x = factor(cluster),
+           y = `number of cells`,
+           fill = `doublet type`
+         )) +
+  geom_bar(
+    stat = "identity",
+    colour = "black",
+    width = 1,
+    position = position_dodge(width = 0.8)
+  ) +
+  geom_text(
+    aes(label = `number of cells`),
+    position = position_dodge(width = 0.9),
+    vjust = -0.25,
+    angle = 45,
+    hjust = -.01
+  ) +
+  theme_classic() + scale_fill_manual(values = c("gray", "#66C2A5")) +
+  ggtitle("Number of cells per cluster") +  xlab("cluster") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_y_continuous(limits = c(0, cellmax))
+path <-
+  paste0(
+    "../results/doublet_finder/",
+    treatment,
+    "_doubletFinder_barplot_per_cluster"
+  )
+pdf(paste0(path, ".pdf"), width = 7, height = 5)
+print(b1)
+dev.off()
+
+
+# filter
+dataObject.singlets <- subset(dataObject, subset = 
+    (CellTypes_DF == "Singlet") 
+)
+dataObject.doublets <- subset(dataObject, subset = 
+    (CellTypes_DF == "Doublet") 
+)
+
+
+# print cells removed
+print(paste0(dim(dataObject)[2] - dim(dataObject.singlets)[2]," nuclei removed"))
+knitr::kable(dim(dataObject.singlets)[2], caption = "Post-doublet nuclei retained")
+```
+
+# Singlets
+### Violins 
+```{r singlet_violins}
+# Astrocytes
+VlnPlot(dataObject.singlets,
+        features = c("AQP4","CLU", "GFAP"))
+# Oligodendrocyte
+VlnPlot(dataObject.singlets,
+        features = c("PLP1","MBP", "MOG"))
+# OPC
+VlnPlot(dataObject.singlets,
+        features = c("PDGFRA", "VCAN", "TNR"))
+```
+
+### DotPlot
+```{r singlet_dotPlot}
+markers.to.plot <-
+  c(
+"CLU", 
+"GFAP", 
+"AQP4", 
+"GJA1",
+"CLDN5", 
+"ADGRF5", 
+"FLT1",
+"COL1A1", 
+"COL1A2", 
+"DCN",
+"HEXB", 
+"C1QA", 
+"C1QC", 
+"C1QB", 
+"TMEM119", 
+"ITGAM", 
+"TYROBP",
+"P2RY12", 
+"AIF1",
+"RBFOX3", 
+"SNAP25",
+"SYT1", 
+"GAD1", 
+"GAD2",
+"PLP1",
+"MBP", 
+"MOG",
+"OLIG1",
+"PDGFRA", 
+"VCAN", 
+"TNR",
+"ACTA2",
+"RGS5", 
+"VTN", 
+"MYL5"
+  )
+
+dot_ind <- DotPlot(dataObject.singlets, 
+                   features = markers.to.plot, 
+                   cluster.idents = TRUE,
+                   dot.scale = 8) + RotatedAxis()
+dot_ind
+```
+
+```{r save_dotPlot_noDoublets}
+# save
+path <- paste0("../results/dot_plot/", treatment,
+               "_unannotated_doublets_removed")
+dot_ind
+saveToPDF(paste0(path, ".pdf"), width = 6.5, height = 4)
+```
+
+
+# Reprocess post-doublet removal 
+```{r reprocess}
+# save singlets as the new dataObject
+dataObject <- dataObject.singlets
+
+# transform
+dataObject <- SCTransform(dataObject, verbose = FALSE)
+
+# run PCA on the merged object
+dataObject <- RunPCA(object = dataObject)
+Idents(dataObject) <- "sample"
+
+# Determine the K-nearest neighbor graph
+dataObject <- FindNeighbors(object = dataObject, 
+                                 assay = "SCT", 
+                                 reduction = "pca",
+                                 dims = 1:15)
+# Run UMAP
+dataObject <- RunUMAP(dataObject,
+                           dims = 1:15,
+                           reduction = "pca",
+                           n.components = 3) 
+
+# Determine the clusters for various resolutions
+dataObject <- FindClusters(object = dataObject,
+                                 algorithm = 1, # 1= Louvain
+                                 resolution = seq(0.1,1,by=0.1))
+```
+
+### Explore resolutions
+```{r umap_noDoublets}
+ditto_umap <- dittoDimPlot(object = dataObject,
+             var = "seurat_clusters",
+             reduction.use = "umap",
+             do.label = TRUE,
+             labels.highlight = TRUE)
+ditto_umap
+
+# 0.4
+umap0.2 <- DimPlot(dataObject,
+        group.by = "SCT_snn_res.0.2",
+        label = TRUE)
+umap0.2
+
+# 0.4
+umap0.4 <- DimPlot(dataObject,
+        group.by = "SCT_snn_res.0.4",
+        label = TRUE)
+umap0.4
+```
+
+```{r save_umap_noDoublets}
+# save
+path <- paste0("../results/UMAP/unannotated/",treatment,
+               "_UMAP_unannotated_doublets_removed")
+ditto_umap
+saveToPDF(paste0(path, ".pdf"), width = 5.5, height = 4)
+```
+
+## Nuclei count per cluster
+```{r nuclei_per_cluster_noDoublets}
+Idents(dataObject) <- dataObject$seurat_clusters
+sample_ncells <- FetchData(dataObject, 
+                     vars = c("ident", "sample")) %>%
+  dplyr::count(ident,sample) %>%
+  tidyr::spread(ident, n)
+write.table(sample_ncells, 
+            paste0("../results/nuclei_count/",
+                   treatment, 
+                   "_nuclei_per_cluster_doublets_removed.txt"),
+            quote = FALSE, sep = "\t")
+sample_ncells
+```
+
+# Save
+```{r save_object,echo=FALSE,eval=TRUE}
+saveRDS(dataObject, paste0("../rObjects/",treatment,"_unannotated_doublets_removed.rds"))
+```
+
