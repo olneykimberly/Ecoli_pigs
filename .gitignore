@@ -4,3 +4,4 @@ Rproj.user
 .Ruserdata
 bulk_RNAseq/scripts/.snakemake
 bulk_RNAseq/scripts/.snakemake/*
+.Rproj.user
