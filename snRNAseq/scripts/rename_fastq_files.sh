@@ -17,7 +17,7 @@ while read -r pattern replacement; do
   for file in "$file_dir"/*"$pattern"*; do
     if [[ -f $file ]]; then # Check if it's a file
       # Remove the part of the filename from the second underscore up to the last occurrence of `_S`
-      new_name=$(echo "$file" | sed -E 's/(JDFSeq_[0-9]+)_[^_]+_S([0-9]+_L[0-9]+_R[12]_001\.fastq\.gz)$/\1_S\2/')
+      new_name=$(echo "$file" | sed -E 's/^(([^_]*_){2}[^_]*)_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+_([^_]*_.*)/\1_\3/')
       # Replace the sample name using the mapping file
       new_name="${new_name//$pattern/$replacement}"
       echo "Renaming: $file -> $new_name"
