@@ -17,19 +17,20 @@ with open('sampleReadGroupInfo_snRNA.txt', 'r') as infile:
         split = line.split()
         sampleAttributes = split[0].split('_') # S6_1_BR_S8_L003_R1_001.fastq.gz
         # create a shorter sample name
-        stemName = sampleAttributes[0]
+        stemName = sampleAttributes[0] + '_' + sampleAttributes[1] + '_' + sampleAttributes[2] 
         allSamples.append(stemName)
 
 # create header and write to outfile
 header = '''{{
     "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
+    "cellranger_dir" : "../cellranger/",
     "cellbender_dir" : "../cellbender/",
     "results" : "../results/",
     "rObjects" : "../rObjects/",
-    "fastq_path" : "../fastq/",
+    "fastq_path" : "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
 
     "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
-    "Sus.scrofa" : "/tgen_labs/jfryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask_filtered_gtf/",
+    "Sus.scrofa" : "/tgen_labs/jfryer/projects/references/pig/ensembl_v7/Sus_scrofa_star_Ymask_Cellranger_2024/",
 
     "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
     "sample_names": {0},
@@ -56,8 +57,8 @@ with open('sampleReadGroupInfo_snRNA.txt', 'r') as infile:
         # uniqueNum-number_sequencer_lane_read.fastq.gz
 
         # create a shorter sample name
-        stemName = sampleAttributes[0]
-        stemID = sampleAttributes[0]
+        stemName = sampleAttributes[0] + '_' + sampleAttributes[1] + '_' + sampleAttributes[2] 
+        stemID = sampleAttributes[0] 
         fullName = sampleAttributes[0] + '_' + sampleAttributes[1] + '_' + sampleAttributes[2] + '_' + sampleAttributes[3] 
         shortName1 = stemName + '_R1'
         shortName2 = stemName + '_R2'
@@ -73,22 +74,20 @@ with open('sampleReadGroupInfo_snRNA.txt', 'r') as infile:
         lane = sampleInfo[4]
         ID = stemID  # ID tag identifies which read group each read belongs to, so each read group's ID must be unique
         SM = fullName  # Sample
-        PU = flowcellID + "." + lane  # Platform Unit
+        PU = flowcellID 
         LB = stemName
 
         out = '''
     "{0}":{{
-        "fq_path": "../fastq/",
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
         "fq": "{1}",
-        "shortName1": "{2}",
-        "shortName2": "{3}",
-        "ID": "{4}",
-        "SM": "{4}",
-        "PU": "{5}",
-        "LB": "{6}",
-        "PL": "Illumina"
+        "ID": "{2}",
+        "SM": "{3}",
+        "PU": "{4}",
+        "LB": "{5}",
+        "PL": "10X"
         '''
-        outfile.write(out.format(stemName, sampleName1, shortName1, shortName2, stemID, PU, LB))
+        outfile.write(out.format(stemName, fullName, stemName, stemID, PU, LB))
         if (counter == numSamples):
             outfile.write("}\n}")
         else:
