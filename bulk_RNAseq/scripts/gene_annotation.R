@@ -23,7 +23,7 @@ protein_coding_genes <- protein_coding_genes %>% mutate(gene_name = coalesce(gen
 # saveRDS(protein_coding_genes$gene_name, file = paste0("../rObjects/gene_options.rds"))
 write.table(
   protein_coding_genes,
-  "/research/labs/neurology/fryer/m239830/Ecoli_pigs/bulk_RNAseq/rObjects/v7_ensembl_protein_coding_genes.txt",
+  "/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/rObjects/v7_ensembl_protein_coding_genes_v2.txt",
   sep = "\t",
   row.names = FALSE,
   quote = FALSE
@@ -36,3 +36,5 @@ keytypes(txdb) # list of the different key types
 tx2gene <-
   AnnotationDbi::select(txdb, txdb_keys, "GENEID", "TXNAME")
 
+# clean up
+rm(txdb, pathToRef, gtf.file, gtf.gr, gtf.df, protein_coding_genes, txdb_keys)

@@ -8,8 +8,8 @@
 # source your bach profile to get your specific settings  
 source $HOME/.bash_profile
 
-conda activate cellbender
-
+#conda activate cellbender
+conda activate cellbender_py38
 # STEPS
 # 0) Rename fastq files to standard format. 
 # sh 00_rename_fastq_files.sh
