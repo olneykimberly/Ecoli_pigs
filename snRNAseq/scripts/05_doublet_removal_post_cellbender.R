@@ -188,7 +188,9 @@ dataObject.singlets <- merge(x = dataObject.split[[1]],
 print(paste0(dim(dataObject)[2] - dim(dataObject.singlets)[2]," nuclie removed"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-saveRDS(dataObject.singlets, paste0("../rObjects/",projectID,".singlets.rds"))
+saveRDS(dataObject.singlets, paste0("../rObjects/",projectID,"_singlets.rds"))
+dataObject.singlets <- readRDS(paste0("../rObjects/",projectID,"_singlets.rds"))
+dataObject.singlets
 dataObject <- dataObject.singlets
 
 
@@ -217,7 +219,7 @@ dataObject <- RunUMAP(dataObject,
 # Determine the clusters for various resolutions
 dataObject <- FindClusters(object = dataObject,
                                  algorithm = 1, # 1= Louvain
-                                 resolution = seq(0.1,.6,by=0.1))
+                                 resolution = seq(0.2,1,by=0.2))
 
 saveRDS(dataObject, paste0("../rObjects/",projectID,"_unannotated_doublets_removed.rds"))
 
@@ -253,7 +255,7 @@ saveToPDF(paste0(path, ".pdf"), width = 7, height = 6.6)
 
 set.seed(45)
 dataObject.integrated <- IntegrateLayers(
-  object = dataObject.filtered, method = HarmonyIntegration,
+  object = dataObject, method = HarmonyIntegration,
   normalization.method = "SCT",
   orig.reduction = "pca", new.reduction = "harmony",
   verbose = FALSE
