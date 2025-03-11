@@ -1,0 +1,95 @@
+{
+    "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
+    "cellranger_dir" : "../cellranger/",
+    "cellbender_dir" : "../cellbender/",
+    "results" : "../results/",
+    "rObjects" : "../rObjects/",
+    "fastq_path" : "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+
+    "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
+    "Sus.scrofa" : "/tgen_labs/jfryer/projects/references/pig/ensembl_v7/Sus_scrofa_star_Ymask_Cellranger_2024/",
+
+    "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
+    "sample_names": ['E1_1_BR','E4_1_BR', 'E6_1_BR', 'E8_1_BR', 'S1_1_BR', 'S2_1_BR', 'S3_1_BR', 'S6_1_BR'], 
+    "read": ['R1', 'R2'],
+
+    "E1_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "E1_1_BR_S1",
+        "ID": "E1_1_BR",
+        "SM": "E1",
+        "PU": "22MLTLLT4",
+        "LB": "E1_1_BR",
+        "PL": "10X"
+        },
+
+    "E4_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "E4_1_BR_S2",
+        "ID": "E4_1_BR",
+        "SM": "E4",
+        "PU": "22MLTLLT4",
+        "LB": "E4_1_BR",
+        "PL": "10X"
+        },
+
+    "E6_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "E6_1_BR_S3",
+        "ID": "E6_1_BR",
+        "SM": "E6",
+        "PU": "22MLTLLT4",
+        "LB": "E6_1_BR",
+        "PL": "10X"
+        },
+
+    "E8_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "E8_1_BR_S4",
+        "ID": "E8_1_BR",
+        "SM": "E8",
+        "PU": "22MLTLLT4",
+        "LB": "E8_1_BR",
+        "PL": "10X"
+        },
+
+    "S1_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "S1_1_BR_S5",
+        "ID": "S1_1_BR",
+        "SM": "S1",
+        "PU": "22MLTLLT4",
+        "LB": "S1_1_BR",
+        "PL": "10X"
+        },
+
+    "S2_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "S2_1_BR_S6",
+        "ID": "S2_1_BR",
+        "SM": "S2",
+        "PU": "22MLTLLT4",
+        "LB": "S2_1_BR",
+        "PL": "10X"
+        },
+
+    "S3_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "S3_1_BR_S7",
+        "ID": "S3_1_BR",
+        "SM": "S3",
+        "PU": "22MLTLLT4",
+        "LB": "S3_1_BR",
+        "PL": "10X"
+        },
+
+    "S6_1_BR":{
+        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq": "S6_1_BR_S8",
+        "ID": "S6_1_BR",
+        "SM": "S6",
+        "PU": "22MLTLLT4",
+        "LB": "S6_1_BR",
+        "PL": "10X"
+        }
+}

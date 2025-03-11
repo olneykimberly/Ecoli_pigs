@@ -20,7 +20,7 @@ setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
 source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
-projectID <- "pigs_cellbender_after_recluster_harm_int"
+projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 ```
 
@@ -44,18 +44,15 @@ ncells <- ggplot(data, aes(x = Sample_ID, y = frequency, fill = Sample_ID)) +
   theme_classic() +
   geom_text(aes(label = frequency), 
             position=position_dodge(width=0.9), 
-            #vjust=-0.25, 
-            hjust = -.025,
-            angle = 90) +
+            vjust=-0.25) +
   #scale_fill_manual(values = sample_colors) + 
-  scale_y_continuous(breaks = seq(0,60000, by = 5000), limits = c(0,60000)) +
-  ggtitle("Filtered: nuclei per sample") +
-  theme(legend.position =  "none") + 
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  scale_y_continuous(breaks = seq(0,25000, by = 5000), limits = c(0,25000)) +
+  ggtitle("Nuclei per sample") +
+  theme(legend.position =  "none") 
 path <- paste0("../results/nuclei_count/",projectID, 
                "_cells_per_sample")
 ncells
-saveToPDF(paste0(path, ".pdf"), width = 10, height = 6)
+saveToPDF(paste0(path, ".pdf"), width = 5, height = 3)
 
 # mean cell count 
 mean(data$frequency)
@@ -76,6 +73,12 @@ DimPlot(dataObject,
 # Unannotated 
 ### UMAP
 ```{r unannotated_umap}
+# numerical order 
+Idents(dataObject) <- factor(dataObject$seurat_clusters, 
+                                     levels = as.character(sort(as.numeric(levels(factor(dataObject$seurat_clusters))))))
+
+levels(Idents(dataObject))
+
 ditto_umap <- dittoDimPlot(object = dataObject,
              var = "seurat_clusters",
              do.label = TRUE,
@@ -104,6 +107,8 @@ colnames(count_melt) <- c("ident", "cluster", "number of nuclei")
 count_max <- count_melt[which.max(count_melt$`number of nuclei`), ]
 count_max_value <- count_max$`number of nuclei`
 cellmax <- count_max_value + 2000 # so that the figure doesn't cut off the text
+count_melt$cluster <- as.factor(as.numeric(as.character(count_melt$cluster)))
+
 count_bar <- ggplot(count_melt, aes(x = factor(cluster), y = `number of nuclei`, fill = `ident`)) +
   geom_bar(
     stat = "identity",
@@ -156,21 +161,6 @@ tree_graph
 dev.off()
 ```
 
-# Azimuth
-```{r azimuth}
-ditto_umap <- dittoDimPlot(object = dataObject,
-             var="predicted.subclass",
-             reduction.use = "umap",
-             do.label = TRUE,
-             labels.highlight = TRUE)
-path <- paste0("../results/UMAP/annotated/",projectID,
-               "_Azimuth")
-ditto_umap
-saveToPDF(paste0(path, ".pdf"), width = 12, height = 8)
-
-
-DimPlot(dataObject)
-```
 
 ## Markers per cluster
 ```{r find_all_markers, eval=FALSE}
@@ -250,7 +240,7 @@ pdf(
     "../results/dot_plot/",
     projectID,
     ".pdf"
-  ),width = 10, height = 12)
+  ),width = 10, height = 10)
 dot_ind_celltype
 dev.off()
 ```
@@ -284,12 +274,12 @@ umap_feature
 path <- paste0("../results/UMAP/unannotated/",projectID,
                "_UMAP_unannotated_celltype_markers")
 umap_feature
-saveToPDF(paste0(path, ".pdf"), width = 12, height = 12)
+saveToPDF(paste0(path, ".pdf"), width = 10, height = 10)
 ```
 
 # Cluster Annotation
 
-## Cluster 0 - astrocyte
+## Cluster 0 - oligo
 ```{r cluster0}
 # Number of cells per condition
 count_per_cluster[,c(1,2)]
@@ -309,7 +299,7 @@ VlnPlot(dataObject,
 cluster0$gene[1:10]
 ```
 
-## Cluster 1 - oligo
+## Cluster 1 - microglia
 ```{r cluster1}
 count_per_cluster[,c(1,3)]
 DimPlot(object = subset(dataObject, seurat_clusters == "1"),
@@ -333,7 +323,7 @@ FeaturePlot(object = subset(dataObject, seurat_clusters == "1"),
 
 ```
 
-## Cluster 2 - microglia
+## Cluster 2 - oligo
 ```{r cluster2}
 count_per_cluster[,c(1,4)]
 DimPlot(object = subset(dataObject, seurat_clusters == "2"),
@@ -352,7 +342,7 @@ VlnPlot(dataObject,
 cluster2$gene[1:10]
 ```
 
-## Cluster 3 - oligo
+## Cluster 3 - astrocyte
 ```{r cluster3}
 count_per_cluster[,c(1,4)]
 DimPlot(object = subset(dataObject, seurat_clusters == "3"),
@@ -390,7 +380,7 @@ VlnPlot(dataObject,
 cluster4$gene[1:10]
 ```
 
-## Cluster 5 - oligo
+## Cluster 5 - astrocyte
 ```{r cluster5}
 count_per_cluster[,c(1,6)]
 DimPlot(object = subset(dataObject, seurat_clusters == "5"),
@@ -409,7 +399,7 @@ VlnPlot(dataObject,
 cluster5$gene[1:10]
 ```
 
-## Cluster 6 - microglia
+## Cluster 6 - oligo
 ```{r cluster6}
 count_per_cluster[,c(1,7)]
 DimPlot(object = subset(dataObject, seurat_clusters == "6"),
@@ -428,7 +418,7 @@ VlnPlot(dataObject,
 cluster6$gene[1:10]
 ```
 
-## Cluster 7 - oligo
+## Cluster 7 - endothelial
 ```{r cluster7}
 count_per_cluster[,c(1,8)]
 DimPlot(object = subset(dataObject, seurat_clusters == "7"),
@@ -447,7 +437,7 @@ VlnPlot(dataObject,
 cluster7$gene[1:10]
 ```
 
-## Cluster 8 - oligo
+## Cluster 8 - astrocyte
 ```{r cluster8}
 count_per_cluster[,c(1,9)]
 DimPlot(object = subset(dataObject, seurat_clusters == "8"),
@@ -466,7 +456,7 @@ VlnPlot(dataObject,
 cluster8$gene[1:10]
 ```
 
-## Cluster 9 - astrocyte
+## Cluster 9 - microglia
 ```{r cluster9}
 count_per_cluster[,c(1,10)]
 DimPlot(object = subset(dataObject, seurat_clusters == "9"),
@@ -485,7 +475,7 @@ VlnPlot(dataObject,
 cluster9$gene[1:10]
 ```
 
-## Cluster 10 - NOISE! 
+## Cluster 10 - astrocyte
 ```{r cluster10}
 count_per_cluster[,c(1,11)]
 DimPlot(object = subset(dataObject, seurat_clusters == "10"),
@@ -502,13 +492,9 @@ VlnPlot(dataObject,
         flip = TRUE,
         split.by = "seurat_clusters")
 cluster10$gene[1:10]
-
-FeaturePlot(subset(dataObject, seurat_clusters == "10"),
-              reduction = "umap",
-              features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
 ```
 
-## Cluster 11 - endothelial
+## Cluster 11 - neuron
 ```{r cluster11}
 count_per_cluster[,c(1,12)]
 DimPlot(object = subset(dataObject, seurat_clusters == "11"),
@@ -527,7 +513,7 @@ VlnPlot(dataObject,
 cluster11$gene[1:10]
 ```
 
-## Cluster 12 - astrocyte
+## Cluster 12 - opc
 ```{r cluster12}
 count_per_cluster[,c(1,13)]
 DimPlot(object = subset(dataObject, seurat_clusters == "12"),
@@ -546,7 +532,7 @@ VlnPlot(dataObject,
 cluster12$gene[1:10]
 ```
 
-## Cluster 13 - NOISE!! 
+## Cluster 13 - oligo
 ```{r cluster13}
 count_per_cluster[,c(1,14)]
 DimPlot(object = subset(dataObject, seurat_clusters == "13"),
@@ -584,7 +570,7 @@ VlnPlot(dataObject,
 cluster14$gene[1:10]
 ```
 
-## Cluster 15 - OPC/polydendrocytes
+## Cluster 15 - opc
 ```{r cluster15}
 count_per_cluster[,c(1,16)]
 DimPlot(object = subset(dataObject, seurat_clusters == "15"),
@@ -603,7 +589,7 @@ VlnPlot(dataObject,
 cluster15$gene[1:10]
 ```
 
-## Cluster 16 - neuron
+## Cluster 16 - VLMC
 ```{r cluster16}
 count_per_cluster[,c(1,17)]
 DimPlot(object = subset(dataObject, seurat_clusters == "16"),
@@ -622,7 +608,7 @@ VlnPlot(dataObject,
 cluster16$gene[1:10]
 ```
 
-## Cluster 17 - oligo - saline 1 sample only
+## Cluster 17 - oligo
 ```{r cluster17}
 count_per_cluster[,c(1,18)]
 DimPlot(object = subset(dataObject, seurat_clusters == "17"),
@@ -640,11 +626,9 @@ VlnPlot(dataObject,
         split.by = "seurat_clusters")
 cluster17$gene[1:10]
 
-DimPlot(object = subset(dataObject, seurat_clusters == "17"),
-        group.by = "Sample_ID")
 ```
 
-## Cluster 18 - OPC / polydendrocyte
+## Cluster 18 - mural
 ```{r cluster18}
 count_per_cluster[,c(1,19)]
 DimPlot(object = subset(dataObject, seurat_clusters == "18"),
@@ -664,7 +648,7 @@ cluster18$gene[1:10]
 ```
 
 
-## Cluster 19 - oligo - saline 1 sample only
+## Cluster 19 - neuron
 ```{r cluster19}
 count_per_cluster[,c(1,20)]
 DimPlot(object = subset(dataObject, seurat_clusters == "19"),
@@ -682,12 +666,10 @@ VlnPlot(dataObject,
         split.by = "seurat_clusters")
 cluster19$gene[1:10]
 
-DimPlot(object = subset(dataObject, seurat_clusters == "19"),
-        group.by = "Sample_ID")
 ```
 
 
-## Cluster 20 - VLMC - Vascular leptomeningeal cells 
+## Cluster 20 - microglia
 ```{r cluster17}
 count_per_cluster[,c(1,21)]
 DimPlot(object = subset(dataObject, seurat_clusters == "20"),
@@ -706,7 +688,7 @@ VlnPlot(dataObject,
 cluster20$gene[1:10]
 ```
 
-## Cluster 21 - mural / endothelial
+## Cluster 21 - neuron
 ```{r cluster21}
 count_per_cluster[,c(1,22)]
 DimPlot(object = subset(dataObject, seurat_clusters == "21"),
@@ -725,7 +707,7 @@ VlnPlot(dataObject,
 cluster21$gene[1:10]
 ```
 
-## Cluster 22 - oligo
+## Cluster 22 - mural
 ```{r cluster22}
 count_per_cluster[,c(1,23)]
 DimPlot(object = subset(dataObject, seurat_clusters == "22"),
@@ -744,7 +726,7 @@ VlnPlot(dataObject,
 cluster22$gene[1:10]
 ```
 
-## Cluster 23 - astrocyte/olig - NOISE!
+## Cluster 23 - endothelial
 ```{r cluster23}
 count_per_cluster[,c(1,24)]
 DimPlot(object = subset(dataObject, seurat_clusters == "23"),
@@ -762,12 +744,9 @@ VlnPlot(dataObject,
         split.by = "seurat_clusters")
 cluster23$gene[1:10]
 
-FeaturePlot(object = subset(dataObject, seurat_clusters == "23"),
-              reduction = "umap",
-              features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
 ```
 
-## Cluster 24 - astrocyte
+## Cluster 24 - oligo
 ```{r cluster24}
 count_per_cluster[,c(1,25)]
 DimPlot(object = subset(dataObject, seurat_clusters == "24"),
@@ -784,153 +763,8 @@ VlnPlot(dataObject,
         flip = TRUE,
         split.by = "seurat_clusters")
 cluster24$gene[1:10]
-```
 
-## Cluster 25 - neuron
-```{r cluster25}
-count_per_cluster[,c(1,26)]
-DimPlot(object = subset(dataObject, seurat_clusters == "25"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[26])
-VlnPlot(dataObject,
-        features = cluster25$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster25$gene[1:10]
-```
-
-## Cluster 26 - neuron
-```{r cluster26}
-count_per_cluster[,c(1,27)]
-DimPlot(object = subset(dataObject, seurat_clusters == "26"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[27])
-VlnPlot(dataObject,
-        features = cluster26$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster26$gene[1:10]
-```
-
-## Cluster 27 - microglia
-```{r cluster27}
-count_per_cluster[,c(1,28)]
-DimPlot(object = subset(dataObject, seurat_clusters == "27"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[28])
-VlnPlot(dataObject,
-        features = cluster27$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster27$gene[1:10]
-```
-
-## Cluster 28 - NOISE
-```{r cluster28}
-count_per_cluster[,c(1,29)]
-DimPlot(object = subset(dataObject, seurat_clusters == "28"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[29])
-VlnPlot(dataObject,
-        features = cluster28$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster28$gene[1:10]
-
-FeaturePlot(object = subset(dataObject, seurat_clusters == "28"),
-              reduction = "umap",
-              features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
-```
-
-## Cluster 29 - NOISE
-```{r cluster29}
-count_per_cluster[,c(1,30)]
-DimPlot(object = subset(dataObject, seurat_clusters == "29"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[30])
-VlnPlot(dataObject,
-        features = cluster29$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster29$gene[1:10]
-
-FeaturePlot(object = subset(dataObject, seurat_clusters == "29"),
-              reduction = "umap",
-              features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
-```
-
-## Cluster 30 - NOISE
-```{r cluster30}
-count_per_cluster[,c(1,31)]
-DimPlot(object = subset(dataObject, seurat_clusters == "30"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[31])
-VlnPlot(dataObject,
-        features = cluster30$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster30$gene[1:10]
-
-FeaturePlot(object = subset(dataObject, seurat_clusters == "30"),
-              reduction = "umap",
-              features = c("FLT1", "MOG", "AQP4", "RBFOX3"))
-```
-
-## Cluster 31 - NOISE
-```{r cluster31}
-count_per_cluster[,c(1,32)]
-DimPlot(object = subset(dataObject, seurat_clusters == "31"),
-        reduction = "umap", 
-        label = TRUE,
-        label.box = TRUE,
-        label.size = 3,
-        repel = TRUE,
-        cols = color.panel[32])
-VlnPlot(dataObject,
-        features = cluster31$gene[1:10],
-        cols = color.panel,
-        stack = TRUE,
-        flip = TRUE,
-        split.by = "seurat_clusters")
-cluster31$gene[1:10]
-
-FeaturePlot(object = subset(dataObject, seurat_clusters == "31"),
+FeaturePlot(object = subset(dataObject, seurat_clusters == "24"),
               reduction = "umap",
               features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
 ```
@@ -939,38 +773,31 @@ FeaturePlot(object = subset(dataObject, seurat_clusters == "31"),
 ## Individual 
 ```{r assign_individual}
 dataObject.annotated <- RenameIdents(object = dataObject, 
-                               "0" = "astrocyte",
-                               "1" = "oligodendrocyte",
-                               "2" = "microglia",
-                               "3" = "oligodendrocyte",
+                               "0" = "oligodendrocyte",
+                               "1" = "microglia",
+                               "2" = "oligodendrocyte",
+                               "3" = "astrocyte",
                                "4" = "oligodendrocyte",
-                               "5" = "oligodendrocyte",
-                               "6" = "microglia",
-                               "7" = "oligodendrocyte",
-                               "8" = "oligodendrocyte",
-                               "9" = "astrocyte",
-                               "10" = "NOISE",
-                               "11" = "endothelial",
-                               "12" = "astrocyte",
-                               "13" = "NOISE",
+                               "5" = "astrocyte",
+                               "6" = "oligodendrocyte",
+                               "7" = "endothelial",
+                               "8" = "astrocyte",
+                               "9" = "microglia",
+                               "10" = "astrocyte",
+                               "11" = "neuron",
+                               "12" = "opc",
+                               "13" = "oligodendrocyte",
                                "14" = "neuron",
                                "15" = "opc",
-                               "16" = "neuron",
-                               "17" = "NOISE", 
-                               "18" = "opc",
-                               "19" = "NOISE", 
-                               "20" = "VLMC",
-                               "21" = "endothelial",
-                               "22" = "oligodendrocyte",
-                               "23" = "NOISE",
-                               "24" = "astrocyte",
-                               "25" = "neuron",
-                               "26" = "neuron",
-                               "27" = "microglia",
-                               "28" = "NOISE", 
-                               "29" = "NOISE",
-                               "30" = "NOISE", 
-                               "31" = "NOISE")
+                               "16" = "VLMC",
+                               "17" = "oligodendrocyte", 
+                               "18" = "mural",
+                               "19" = "neuron", 
+                               "20" = "microglia",
+                               "21" = "neuron",
+                               "22" = "mural",
+                               "23" = "endothelial",
+                               "24" = "oligodendrocyte")
 dataObject.annotated$individual_clusters <- factor(Idents(dataObject.annotated))
 
 path <- paste0("../results/UMAP/annotated/",projectID,
@@ -1101,14 +928,14 @@ dev.off()
 ### Relative abundance
 ```{r relative_cell_type}
 relative_abundance <- dataObject.annotated@meta.data %>%
-  group_by(individual_clusters, orig.ident) %>%
+  group_by(individual_clusters, Sample_ID) %>%
   dplyr::count() %>%
-  group_by(orig.ident) %>%
+  group_by(Sample_ID) %>%
   dplyr::mutate(percent = 100 * n / sum(n)) %>%
   ungroup()
 
 
-rel_abun <- ggplot(relative_abundance, aes(x = orig.ident, y = percent, fill = individual_clusters)) +
+rel_abun <- ggplot(relative_abundance, aes(x = Sample_ID, y = percent, fill = individual_clusters)) +
   geom_col() +
   geom_text(aes(label = paste0(round(percent), "%")), 
             position = position_stack(vjust = 0.5), size = 3, color = "white") +
@@ -1122,21 +949,48 @@ pdf(
   paste0(
     "../results/UMAP/annotated/",
     projectID,
-    "_clusters_relative_abundance.pdf"
+    "_clusters_relative_abundance_Sample_ID.pdf"
   ),
-  width = 6,
-  height = 8
+  width = 8,
+  height = 6
+)
+rel_abun
+dev.off()
+
+# Group
+relative_abundance <- dataObject.annotated@meta.data %>%
+  group_by(individual_clusters, group) %>%
+  dplyr::count() %>%
+  group_by(group) %>%
+  dplyr::mutate(percent = 100 * n / sum(n)) %>%
+  ungroup()
+
+
+rel_abun <- ggplot(relative_abundance, aes(x = group, y = percent, fill = individual_clusters)) +
+  geom_col() +
+  geom_text(aes(label = paste0(round(percent), "%")), 
+            position = position_stack(vjust = 0.5), size = 3, color = "white") +
+  scale_fill_manual(values = color.panel) +
+  ggtitle("Percentage of cell type") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+rel_abun
+
+pdf(
+  paste0(
+    "../results/UMAP/annotated/",
+    projectID,
+    "_clusters_relative_abundance_group.pdf"
+  ),
+  width = 8,
+  height = 6
 )
 rel_abun
 dev.off()
 ```
-# Remove noise
-```{r}
-dataObject.annotated$individual_clusters
-dataObject.annotated.clean <- subset(dataObject.annotated, cells = WhichCells(dataObject.annotated, idents = setdiff(unique(dataObject.annotated$individual_clusters), c("NOISE"))))
-```
 
 # Save RDS 
 ```{r save_annotations}
-saveRDS(dataObject.annotated.clean, paste0("../rObjects/", projectID, "_noise_removed_after_annotation.rds"))
+saveRDS(dataObject.annotated, paste0("../rObjects/", projectID, "_annotated.rds"))
 ```
+

@@ -1,0 +1,208 @@
+---
+title: "annotations"
+author: "Kimberly Olney, PhD"
+date: "03/10/2025"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+```
+
+# Libraris, paths, colors
+```{r echo=FALSE, message=FALSE}
+source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation"
+color.panel <- dittoColors()
+```
+
+# Read in object
+```{r read_object}
+# read object
+dataObject <- readRDS(paste0("../rObjects/", projectID, ".rds"))
+# inspect
+dataObject
+```
+
+## Number of nuclie per sample
+```{r number_cells}
+# Visualize the number of cell counts per sample
+data <- as.data.frame(table(dataObject$Sample_ID))
+colnames(data) <- c("Sample_ID","frequency")
+
+ncells <- ggplot(data, aes(x = Sample_ID, y = frequency, fill = Sample_ID)) + 
+  geom_col() +
+  theme_classic() +
+  geom_text(aes(label = frequency), 
+            position=position_dodge(width=0.9), 
+            #vjust=-0.25, 
+            hjust = -.025,
+            angle = 90) +
+  #scale_fill_manual(values = sample_colors) + 
+  scale_y_continuous(breaks = seq(0,60000, by = 5000), limits = c(0,60000)) +
+  ggtitle("Filtered: nuclei per sample") +
+  theme(legend.position =  "none") + 
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+path <- paste0("../results/nuclei_count/",projectID, 
+               "_cells_per_sample")
+ncells
+saveToPDF(paste0(path, ".pdf"), width = 10, height = 6)
+
+# mean cell count 
+mean(data$frequency)
+
+# median cell count 
+median(data$frequency)
+```
+
+## UMAP by group and sample
+```{r dimplot1}
+DimPlot(dataObject,
+        group.by = "group")
+
+DimPlot(dataObject,
+        group.by = "Sample_ID")
+```
+
+## Inspect
+```{r}
+# Inspect 
+dataObject
+# Inspect layers
+Layers(dataObject[["RNA"]])
+
+# Set indents to sample ID
+Idents(dataObject) <- "Sample_ID"
+dataObject # inspect
+```
+
+# SCTransform per sample
+```{r SCTransform}
+## ----split_by_sample-----------------------------------------------------------------------------------------------------
+# Split
+dataObject[["RNA"]] <- split(dataObject[["RNA"]], f = dataObject$Sample_ID)
+# Note that since the data is split into layers, normalization and variable feature identification is performed for each sample independently 
+# (a consensus set of variable features is automatically identified).
+
+# Inspect
+dataObject
+# Layers
+Layers(dataObject[["RNA"]])
+
+# Re-normalizing data via SCTransform
+dataObject <- SCTransform(dataObject, verbose = TRUE, conserve.memory = TRUE)
+all.genes <- rownames(dataObject)
+# Inspect 
+dataObject
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(dataObject), 10)
+top10
+
+# run PCA on the merged object
+dataObject <- RunPCA(object = dataObject)
+
+# Determine the K-nearest neighbor graph
+dataObject <- FindNeighbors(object = dataObject, 
+                                  assay = "SCT", 
+                                  reduction = "pca",
+                                  dims = 1:15)
+# Run UMAP
+dataObject <- RunUMAP(dataObject,
+                            dims = 1:15,
+                            reduction = "pca",
+                            n.components = 3) 
+
+# Determine the clusters for various resolutions
+dataObject <- FindClusters(object = dataObject,
+                                 algorithm = 1, # 1= Louvain
+                                 resolution = .5)
+
+# Set indents to SCT resolution 
+Idents(dataObject) <- dataObject$SCT_snn_res.0.5
+dataObject$seurat_clusters <- dataObject$SCT_snn_res.0.5
+
+# Save 
+saveRDS(dataObject, paste0("../rObjects/",projectID,"_SCTransform.rds"))
+dataObject <- readRDS(paste0("../rObjects/",projectID,"_SCTransform.rds"))
+
+
+#----- plot UMAPS
+# group 
+pdf(paste0("../results/UMAP/unannotated/", projectID,
+           "_SCTransform.pdf"), width = 9, height = 7)
+DimPlot(dataObject,
+        group.by = "group")
+dev.off()
+```
+
+# Integrate Layers via Harmony
+```{r IntegrateLayers_via_Harmony}
+dataObject.integrated <- IntegrateLayers(
+  object = dataObject, method = HarmonyIntegration,
+  orig.reduction = "pca", new.reduction = "harmony",
+  verbose = FALSE
+)
+dataObject.integrated
+# Determine the K-nearest neighbor graph
+dataObject.integrated <- FindNeighbors(object = dataObject.integrated, 
+                                       reduction = "harmony", 
+                                       dims = 1:30)
+
+# Determine the clusters for various resolutions
+dataObject.integrated <- FindClusters(object = dataObject.integrated, resolution = 0.8)
+dataObject.integrated <- RunUMAP(dataObject.integrated, reduction = "harmony", dims = 1:30)
+Idents(dataObject.integrated) 
+
+# Set indents to SCT resolution 
+Idents(dataObject.integrated) <- dataObject.integrated$SCT_snn_res.0.8
+dataObject.integrated$seurat_clusters <- dataObject.integrated$SCT_snn_res.0.8
+
+#----- plot UMAPS
+# group 
+pdf(paste0("../results/UMAP/unannotated/", projectID,
+           ".pdf"), width = 9, height = 7)
+DimPlot(dataObject.integrated,
+        group.by = "group")
+dev.off()
+
+# Sample ID
+pdf(paste0("../results/UMAP/unannotated/", projectID,
+           ".pdf"), width = 9, height = 7)
+DimPlot(dataObject.integrated,
+        group.by = "Sample_ID")
+dev.off()
+```
+# Azimuth predictions
+```{r Azimuth_predictions}
+dataObject.integrated[["RNA"]] <- JoinLayers(dataObject.integrated[["RNA"]])
+
+# Inspect after join layers
+Layers(dataObject.integrated[["RNA"]])
+
+dataObject.integrated <- RunAzimuth(dataObject.integrated, reference = "humancortexref")
+# currently, the object has two layers in the RNA assay: counts, and data
+# DimPlot(dataObject, group.by = "predicted.subclass", label = TRUE, label.size = 3) + NoLegend()
+ditto_umap <- dittoDimPlot(object = dataObject.integrated,
+                           var="predicted.subclass",
+                           reduction.use = "umap",
+                           do.label = TRUE,
+                           labels.highlight = TRUE)
+path <- paste0("../results/UMAP/annotated/",projectID,
+               "_Azimuth_FINAL")
+ditto_umap
+saveToPDF(paste0(path, ".pdf"), width = 12, height = 8)
+```
+
+# Save r object - FINAL
+```{r save_integrated}
+saveRDS(dataObject.integrated, paste0("../rObjects/",projectID,"_FINAL.rds"))
+```
