@@ -6,7 +6,7 @@ output:
   pdf_document: default
 ---
 
-Compare Saline vs Saline between project LPS and project Ecoli
+Compare Ecoli vs Saline
 
 # Set up working enivornment
 ```{r setup, include=FALSE}

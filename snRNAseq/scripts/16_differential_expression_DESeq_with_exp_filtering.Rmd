@@ -147,7 +147,6 @@ calculate_percentages <- function(counts, group_labels) {
     return(pct_df)
 }
 
-cell_type <- "neuron"
 # Loop through each cell type to perform differential expression analysis for each condition
 for (cell_type in cell_types) {
     # group comparison with covariates

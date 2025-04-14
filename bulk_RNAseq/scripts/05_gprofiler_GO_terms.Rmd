@@ -1,0 +1,559 @@
+---
+title: "gprofiler2"
+author: "Kimberly Olney"
+date: "April 2025"
+output: html_document
+---
+
+# gprofiler for gene enrichment analysis
+```{r libraries, message=FALSE, warning=FALSE}
+source("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/file_paths_and_colours.R")
+```
+
+# Read in DEGs
+The DEGs are already ordered by smallest to largest adjusted p-value.
+```{r loop, echo=FALSE}
+allComparisons <- c("Ecoli_vs_Saline")
+# first read in the files
+for (i in allComparisons) {
+  filepath <- paste0("../results/DEGs/", i,
+    "_q0.05_lfc0.25.txt")
+  df <- assign(paste0(i),
+         tryCatch(
+         read.delim(
+           filepath,
+           header = TRUE,
+           sep = "\t",
+           stringsAsFactors = FALSE
+         ), error=function(e) NULL))
+  up <- subset(df$gene_name, df$logFC > 0, sort = FALSE)
+  assign(paste0(i, "_up"), up)
+  down <- subset(df$gene_name, df$logFC < 0, sort = FALSE)
+  assign(paste0(i, "_down"), down)
+  
+  # gprofiler
+  gp_up <- gost(up, ordered_query = TRUE, organism = "sscrofa")
+  gp_down <- gost(down, ordered_query = TRUE, organism = "sscrofa")
+  
+  up_names = gconvert(up, organism = "sscrofa")
+  down_names = gconvert(down, organism = "sscrofa")
+  multi_gp = gost(list("down-regulated" = down_names, 
+                     "up-regulated" = up_names), ordered_query = TRUE, 
+                     organism = "sscrofa")
+  # rearrange so that up-regulated is on top 
+  neworder <- c("up-regulated","down-regulated")
+  multi_gp$result <- arrange(transform(multi_gp$result,
+             query=factor(query,levels=neworder)),query)
+  print(paste("i =", i))
+  # interactive plot 
+  gostplot(multi_gp, interactive = TRUE)
+  p_up_and_down = gostplot(multi_gp, interactive = FALSE)
+  p <- publish_gostplot(p_up_and_down)
+  path <- paste0("../results/gprofiler/", i, "_up_and_down_gprofiler")
+  pdf(paste0(path, ".pdf"), height = 6, width = 8)
+  print(p)
+  dev.off()
+  
+  # needed to convert to enrichResult object
+  up_names = gconvert(up, organism = "sscrofa") 
+  down_names = gconvert(down,organism = "sscrofa")
+  # enrichment analysis using gene names
+  multi_gp = gost(list("up-regulated" = up_names$name, "down-regulated" = down_names$name), 
+                  multi_query = FALSE, evcodes = TRUE, ordered_query = TRUE, organism = "sscrofa")
+  write.table(up_names, paste0("../results/gprofiler/", 
+                               i, "_up_gene_descriptions.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(down_names, paste0("../results/gprofiler/", 
+                               i, "_down_gene_descriptions.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  # reorder so that up-regulated is on top
+  neworder <- c("up-regulated","down-regulated")
+  multi_gp$result <- arrange(transform(multi_gp$result,
+             query=factor(query,levels=neworder)),query)
+
+  # modify the g:Profiler data frame
+  gp_mod = multi_gp$result[,c("query", "source", "term_id", "term_name", "p_value", 
+                            "query_size", "intersection_size","term_size", 
+                            "effective_domain_size","intersection")] 
+  # get the gene name size for each GO 
+  gp_mod$GeneRatio = paste0(gp_mod$intersection_size, "/", gp_mod$query_size)
+  gp_mod$BgRatio = paste0(gp_mod$term_size, "/", gp_mod$effective_domain_size) 
+  names(gp_mod) = c("Cluster", "Category", "ID", "Description", "p.adjust", 
+                    "query_size", "Count", "term_size", "effective_domain_size",
+                    "gene_name", "GeneRatio", "BgRatio") 
+  gp_mod$gene_name = gsub(",", "/", gp_mod$gene_name)
+  row.names(gp_mod) = make.names(gp_mod$ID, unique = TRUE)
+  # output table 
+  write.table(gp_mod, paste0("../results/gprofiler/", i, "_up_and_down_gp_mod_enrich.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+}
+```
+
+# Interactive plot
+```{r}
+#--- get terms to highlight
+gp_mod_up <- subset(gp_mod, Cluster == "up-regulated")
+gp_mod_up$p.adjust <- as.numeric(gp_mod_up$p.adjust)
+# Remove rows with NA in required columns
+gp_up_clean <- na.omit(gp_mod_up[, c("Category", "ID", "p.adjust")])
+# Split by Category
+up_split_gp <- split(gp_up_clean, gp_up_clean$Category)
+# Get top 3 by p.adjust per Category
+up_top3_list <- lapply(up_split_gp, function(df) {
+  df[order(df$p.adjust), ][1:min(2, nrow(df)), ]
+})
+# Combine back into a single data frame
+up_top3_terms <- do.call(rbind, up_top3_list)
+
+gp_mod_down <- subset(gp_mod, Cluster == "down-regulated")
+gp_down$p.adjust <- as.numeric(gp_down$p.adjust)
+# Remove rows with NA in required columns
+gp_down_clean <- na.omit(gp_mod_down[, c("Category", "ID", "p.adjust")])
+# Split by Category
+down_split_gp <- split(gp_down_clean, gp_down_clean$Category)
+# Get top 3 by p.adjust per Category
+down_top3_list <- lapply(down_split_gp, function(df) {
+  df[order(df$p.adjust), ][1:min(1, nrow(df)), ]
+})
+# Combine back into a single data frame
+down_top3_terms <- do.call(rbind, down_top3_list)
+
+#--- up
+# interactive plot
+gostplot(gp_up, interactive = TRUE)
+p_up = gostplot(gp_up, interactive = FALSE)
+plot_up <- publish_gostplot_intersect(p_up, highlight_terms = c(up_top3_terms$ID))
+plot_up
+path <- paste0("../results/gprofiler/", i, "_up_gprofiler")
+pdf(paste0(path, ".pdf"), height = 10, width = 8)
+print(plot_up)
+dev.off()
+
+#--- down
+# interactive plot
+gostplot(gp_down, interactive = TRUE)
+p_down = gostplot(gp_down, interactive = FALSE)
+plot_down <- publish_gostplot_intersect(p_down, highlight_terms = c(down_top3_terms$ID))
+plot_down
+path <- paste0("../results/gprofiler/", i, "_down_gprofiler")
+pdf(paste0(path, ".pdf"), height = 6, width = 8)
+print(plot_down)
+dev.off()
+```
+
+# plot gprofiler up and down together 
+```{r}
+row1 <-
+  ggarrange(
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    ncol = 4,
+    labels = c("up-regulated", "", "", ""),
+    font.label = list(size = 12, color = "red")
+  )
+
+row3 <-
+  ggarrange(
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    ncol = 4,
+    labels = c("down-regulated", "", "", ""),
+    font.label = list(size = 12, color = "blue")
+  )
+combind <-
+  ggarrange(
+    row1,
+    plot_up,
+    row3,
+    plot_down,
+    nrow = 4,
+    labels = c("a)", "", "b)", ""),
+    heights = c(0.1, 1.25, 0.05, 0.85),
+    font.label = list(size = 12)
+  )
+combind
+
+path <- paste0("../results/manuscript_figures/Supplemental_Figure_Ecoli_vs_Saline_bulkRNA_gProfiler_bubble")
+saveToPDF(paste0(path, ".pdf"), width = 8.5, height = 11)
+```
+# CPM data
+```{r}
+dge.filtered.norm <- readRDS("../rObjects/dge.filtered.norm.4vs4.rds")
+lcpm <- edgeR::cpm(dge.filtered.norm$counts, log = TRUE)
+```
+
+# Fold change information 
+```{r}
+allComparisons <- c("Ecoli_vs_Saline")
+# first read in the files
+for (i in allComparisons) {
+  filepath <- paste0("../results/DEGs/", i,
+    "_q0.05_lfc0.25.txt")
+  df <- assign(paste0(i),
+         tryCatch(
+         read.delim(
+           filepath,
+           header = TRUE,
+           sep = "\t",
+           stringsAsFactors = FALSE
+         ), error=function(e) NULL))
+}
+treatment_vs_control <- df
+up_regulated <- subset(
+  treatment_vs_control,
+  treatment_vs_control$adj.P.Val <= 0.05 &
+    treatment_vs_control$logFC > 0
+)
+down_regulated <- subset(
+  treatment_vs_control,
+  treatment_vs_control$adj.P.Val <= 0.05 &
+    treatment_vs_control$logFC <= 0
+)
+
+# sort by log2FC and adjusted p-val
+up_regulated_sort <-
+  up_regulated[order(-up_regulated$logFC, up_regulated$adj.P.Val), ]
+down_regulated_sort <-
+  down_regulated[order(down_regulated$logFC, down_regulated$adj.P.Val), ]
+
+# get the lcpm information for those genes of interest
+up_regulated_lcpm <- subset(lcpm, row.names(lcpm) %in%
+                              up_regulated_sort$gene_id)
+down_regulated_lcpm <- subset(lcpm, row.names(lcpm) %in%
+                                down_regulated_sort$gene_id)
+
+# reform the data
+up_regulated_sort_df <- up_regulated_lcpm %>%
+  as.data.frame() %>%
+  rownames_to_column("gene_id") %>%
+  pivot_longer(-c(gene_id), names_to = "samples", values_to = "counts") %>%
+  mutate(samples = fct_relevel(samples, colnames(up_regulated_lcpm)))
+
+down_regulated_sort_df <- down_regulated_lcpm %>%
+  as.data.frame() %>%
+  rownames_to_column("gene_id") %>%
+  pivot_longer(-c(gene_id), names_to = "samples", values_to = "counts") %>%
+  mutate(samples = fct_relevel(samples, colnames(down_regulated_lcpm)))
+
+# lock in gene order which is sorted by adjusted p-value
+up_regulated_sort_df$gene_id <-
+  factor(up_regulated_sort_df$gene_id,
+         levels = unique(up_regulated_sort_df$gene_id))
+up_regulated_sort_df$gene_id <-
+  fct_rev(up_regulated_sort_df$gene_id)
+down_regulated_sort_df$gene_id <-
+  factor(down_regulated_sort_df$gene_id,
+         levels = unique(down_regulated_sort_df$gene_id))
+down_regulated_sort_df$gene_id <-
+  fct_rev(down_regulated_sort_df$gene_id)
+
+DEG_df <-
+  rbind(up_regulated_sort_df, down_regulated_sort_df)
+
+DEG_df$Condition <-
+  ifelse(grepl("E", DEG_df$samples),
+         "Ecoli",
+         "Control")
+
+DEG_sort <- rbind(up_regulated_sort, down_regulated_sort)
+names(DEG_sort)[names(DEG_sort) == "gene_name"] <- "gene"
+```
+
+remove files
+```{r}
+remove(
+  lcpm,
+  down_regulated,
+  down_regulated_lcpm,
+  down_regulated_sort,
+  down_regulated_sort_df,
+  up_regulated,
+  up_regulated_lcpm,
+  up_regulated_sort,
+  up_regulated_sort_df
+)
+```
+
+# Heatmap of genes in enrichment GO term
+```{r}
+# Remove genes with no gene name
+DEG_sort <- DEG_sort[!grepl("^ENSSSCG", DEG_sort$gene), ]
+
+# Transcription factors
+TF <- subset(up_names, grepl("transcription factor", description, ignore.case = TRUE))
+
+#---
+up_enrich_df <-
+  gp_mod_up[, c("ID", "Description", "p.adjust", "gene_name")]
+up_enrich_df_melt <- reshape2::melt(up_enrich_df)
+up_gene_char <- str_split(up_enrich_df_melt$gene_name, "/")
+# Name each list by the corresponding Description
+names(up_gene_char) <- up_enrich_df$Description
+
+# Now you can access gene lists like this:
+up_input <- list(
+  "defense response" = up_gene_char[["defense response"]],
+  "side of membrane" = up_gene_char[["side of membrane"]],
+  "signaling receptor binding" = up_gene_char[["signaling receptor binding"]],
+  "TNF signaling pathway" = up_gene_char[["TNF signaling pathway"]], 
+  "Cytokine Signaling in Immune system" = up_gene_char[["Cytokine Signaling in Immune system"]]
+)
+
+up_data <- fromList(up_input)
+up_data$gene <- row.names(up_data)
+up_data_melt <- reshape2::melt(up_data)
+
+# get the fold change value for those genes
+up_df <- merge(up_data_melt, DEG_sort,
+                       by = "gene")
+# order by fold change 
+up_df <- up_df[order(-up_df$logFC, -up_df$adj.P.Val),]
+
+up_top_genes_per_term <- list()
+for (term in names(up_input)) {
+  term_df <- subset(up_df, variable == term & value == 1)
+  up_top_genes_per_term[[term]] <- head(term_df, 15)
+}
+# Now access like:
+# up_top_genes_per_term[["defense response"]]
+# up_top_genes_per_term[["TNF signaling pathway"]]
+# merge them together 
+up_GO_top <- do.call(rbind, up_top_genes_per_term)
+up_GO_top <- bind_rows(up_top_genes_per_term, .id = "GO_term")
+
+
+#---
+down_enrich_df <-
+  gp_mod_down[, c("ID", "Description", "p.adjust", "gene_name")]
+down_enrich_df_melt <- reshape2::melt(down_enrich_df)
+down_gene_char <- str_split(down_enrich_df_melt$gene_name, "/")
+# Name each list by the corresponding Description
+names(down_gene_char) <- down_enrich_df$Description
+
+# Now you can access gene lists like this:
+down_input <- list(
+  "vitamin transport" = down_gene_char[["vitamin transport"]],
+  "azole transmembrane transporter activitye" = down_gene_char[["azole transmembrane transporter activity"]],
+  "Vitamin digestion and absorption" = down_gene_char[["Vitamin digestion and absorption"]],
+  "Metabolism of water−soluble vitamins and cofactors" = down_gene_char[["Metabolism of water-soluble vitamins and cofactors"]]
+)
+down_data <- fromList(down_input)
+down_data$gene <- row.names(down_data)
+down_data_melt <- reshape2::melt(down_data)
+
+# get the fold change value for those genes
+down_df <- merge(down_data_melt, DEG_sort,
+                       by = "gene")
+# order by fold change 
+down_df <- down_df[order(-down_df$logFC, -down_df$adj.P.Val),]
+
+down_top_genes_per_term <- list()
+for (term in names(down_input)) {
+  term_df <- subset(down_df, variable == term & value == 1)
+  down_top_genes_per_term[[term]] <- head(term_df, 15)
+}
+# Now access like:
+# down_top_genes_per_term[["defense response"]]
+# down_top_genes_per_term[["TNF signaling pathway"]]
+# merge them together 
+down_GO_top <- do.call(rbind, down_top_genes_per_term)
+down_GO_top <- bind_rows(down_top_genes_per_term, .id = "GO_term")
+```
+
+##### TF heatmap
+```{r TF}
+# lock in gene order which is sorted by adjusted p-value
+TF_DEG <- subset(DEG_df, DEG_df$gene_id %in% TF$target)
+TF_DEG <- merge(TF_DEG, DEG_sort, by = "gene_id", all.x = TRUE)
+
+# Sort by logFC
+TF_DEG <- TF_DEG %>%
+  arrange(logFC) %>%  # or `desc(logFC)` if you want high to low
+  mutate(gene = factor(gene, levels = unique(gene)))
+
+# heatmap 
+up_TF_lcpm_heat <- ggplot(data = TF_DEG, aes(x = samples, y = gene)) +
+  geom_tile(aes(fill = counts)) +
+  ggplot2::facet_grid(~ Condition, scales = "free", switch = "both") +
+  scale_fill_gradient2(
+    low = "#FFFFCCFF",
+    mid = "#FD8D3CFF",
+    high = "#800026FF",
+    midpoint = 2.5,
+    space = "rgb",
+    guide = "colourbar",
+    breaks = c(-4, 0, 4, 8, 10),
+    name = expression(log[2](CPM))
+  ) +
+  scale_x_discrete(expand = c(0,0)) +
+  theme_bw() +
+  theme(
+    strip.text = element_text(size = 10),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    plot.margin = margin(0, 0.2, 0, 0.2, "cm"), 
+    panel.spacing = unit(0,'lines'), 
+    plot.title = element_text(size = 12, vjust = -1, hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x = element_blank(), 
+    axis.ticks.x=element_blank(), 
+    axis.title.y = element_blank(), 
+    axis.text.y = element_text(size = 10, margin = margin(r = -2)),
+    axis.ticks.y=element_blank()) +
+    ggtitle("transcription factors") 
+up_TF_lcpm_heat
+```
+# GO term heatmaps
+```{r heatmap_loop}
+# Replace GO_top with your full top_df (e.g., GO_3_top + GO_4_top merged if needed)
+all_heatmaps <- list()
+
+for (term in names(up_input)) {
+  heatmap <- generate_heatmap(term, up_input[[term]], DEG_df, up_GO_top)
+  all_heatmaps[[term]] <- heatmap
+}
+
+# Now you can view them like:
+all_heatmaps[["defense response"]]
+all_heatmaps[["side of membrane"]]
+all_heatmaps[["signaling receptor binding"]]
+all_heatmaps[["TNF signaling pathway"]]
+all_heatmaps[["Cytokine Signaling in Immune system"]]
+
+
+down_all_heatmaps <- list()
+
+for (term in names(down_input)) {
+  heatmap <- generate_heatmap(term, down_input[[term]], DEG_df, down_GO_top)
+  down_all_heatmaps[[term]] <- heatmap
+}
+
+
+down_all_heatmaps[["vitamin transport"]]
+down_all_heatmaps[["azole transmembrane transporter activitye"]]
+down_all_heatmaps[["Vitamin digestion and absorption"]]
+down_all_heatmaps[["Metabolism of water−soluble vitamins and cofactors"]]
+```
+### legend only
+```{r}
+u=seq(-4,10, by=0.01)
+df <- data.frame(u)
+# heatmap 
+legend_data <- ggplot(data = df, aes(x=u,y=row_number(df))) +
+  geom_tile(aes(fill = u)) +
+  scale_fill_gradient2(
+    low = "#FFFFCCFF",
+    mid = "#FD8D3CFF",
+    high = "#800026FF",
+    midpoint = 2.5,
+    space = "rgb",
+    guide = "colourbar",
+    breaks = c(-4, 0, 4, 10),
+    name = expression(log[2](CPM))
+  ) +
+  theme(
+    legend.position = "bottom", 
+    legend.text = element_text(size =10), 
+    legend.title = element_text (size = 10), 
+    legend.margin=margin(0,0,1,0),
+    legend.key.size = unit(0.5, "cm"))
+legend_data <- addSmallLegend(legend_data)
+
+leg <- get_legend(legend_data)
+# Convert to a ggplot and print
+legend_heat_bar <- as_ggplot(leg)
+legend_heat_bar
+```
+
+# combine data 
+```{r}
+row1 <-
+  ggarrange(
+    NULL,
+    legend_heat_bar,
+    NULL,
+    NULL,
+    ncol = 4,
+    labels = c("up-regulated", "", "", ""),
+    font.label = list(size = 12, color = "red")
+  )
+
+row2 <- ggarrange(
+  all_heatmaps[["defense response"]],
+  all_heatmaps[["side of membrane"]],
+  all_heatmaps[["signaling receptor binding"]],
+  ncol = 3,
+  labels = c("a)", "b)", "c)"),
+  font.label = list(size = 12)
+  )
+
+row3 <- ggarrange(
+  all_heatmaps[["TNF signaling pathway"]],
+  all_heatmaps[["Cytokine Signaling in Immune system"]],
+  up_TF_lcpm_heat,
+  ncol = 3,
+  labels = c("d)", "e)", "f)"),
+  font.label = list(size = 12)
+  )
+
+combind <-
+  ggarrange(
+    row1,
+    row2,
+    row3,
+    nrow = 3,
+    heights = c(0.1, 1, 1) #, 0.05, 1
+  )
+combind
+
+path <- paste0("../results/manuscript_figures/Supplemental_Figure_Ecoli_vs_Saline_bulkRNA_gp_upregulated_heatmaps")
+saveToPDF(paste0(path, ".pdf"), width = 8.5, height = 11)
+```
+
+```{r down}
+row1 <-
+  ggarrange(
+    NULL,
+    legend_heat_bar,
+    NULL,
+    NULL,
+    ncol = 4,
+    labels = c("down-regulated", "", "", ""),
+    font.label = list(size = 12, color = "blue")
+  )
+
+row2 <- ggarrange(
+  down_all_heatmaps[["vitamin transport"]],
+  down_all_heatmaps[["azole transmembrane transporter activitye"]],
+  ncol = 2,
+  labels = c("a)", "b)"),
+  font.label = list(size = 12)
+  )
+
+row3 <- ggarrange(
+  down_all_heatmaps[["Vitamin digestion and absorption"]],
+  down_all_heatmaps[["Metabolism of water−soluble vitamins and cofactors"]],
+  ncol = 2,
+  labels = c("c)", "d)"),
+  font.label = list(size = 12)
+  )
+
+combind <-
+  ggarrange(
+    row1,
+    row2,
+    row3,
+    nrow = 3,
+    heights = c(0.1, 1, 1) #, 0.05, 1
+  )
+combind
+
+path <- paste0("../results/manuscript_figures/Supplemental_Figure_Ecoli_vs_Saline_bulkRNA_gp_downregulated_heatmaps")
+saveToPDF(paste0(path, ".pdf"), width = 8.5, height = 5)
+```
+

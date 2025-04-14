@@ -47,6 +47,7 @@ posFC = 0.25
 negFC = -0.25
 FC = 0.25
 ```
+
 ```{r volcano_group, warning=FALSE}
 allcelltypes <- "all_celltypes"
 for (i in allcelltypes) {
@@ -356,7 +357,7 @@ list_of_datasets <- list()
 for (i in cell_types) {
   filepath <- paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i, "_Ecoli_vs_Saline_comparison_pseudobulk.txt")
   dataset <- read.delim(filepath, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-  filtered_dataset <- subset(dataset, padj < 0.1 & log2FoldChange < negFC)
+  filtered_dataset <- subset(dataset, padj < 0.05 & log2FoldChange < negFC)
   list_of_datasets[[i]] <- filtered_dataset
 }
 write.xlsx(list_of_datasets, file = paste0(

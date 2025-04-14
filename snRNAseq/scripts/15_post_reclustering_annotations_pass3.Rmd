@@ -855,12 +855,25 @@ pdf(
     projectID,
     "_individual_clusters_nuclei_count.pdf"
   ),
-  width = 11,
-  height = 7
+  width = 7,
+  height = 4.5
 )
 count_bar
 dev.off()
 ```
+
+### Nuclei count per cluster per individual
+```{r annotated_counts_individual}
+count_per_cluster <- FetchData(dataObject.annotated,
+                               vars = c("ident", "Sample_ID")) %>%
+  dplyr::count(ident, Sample_ID) %>%
+  tidyr::spread(ident, n)
+count_per_cluster
+write.table(count_per_cluster, paste0("../results/UMAP/annotated/",
+    projectID,
+    "_individual_clusters_nuclei_count_per_sample.txt"), sep="\t", quote=FALSE, row.names = FALSE)
+```
+
 
 ### DotPlot
 ```{r dot_individual}
