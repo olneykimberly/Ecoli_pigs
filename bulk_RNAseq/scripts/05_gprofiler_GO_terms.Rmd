@@ -180,6 +180,7 @@ combind
 path <- paste0("../results/manuscript_figures/Supplemental_Figure_Ecoli_vs_Saline_bulkRNA_gProfiler_bubble")
 saveToPDF(paste0(path, ".pdf"), width = 8.5, height = 11)
 ```
+
 # CPM data
 ```{r}
 dge.filtered.norm <- readRDS("../rObjects/dge.filtered.norm.4vs4.rds")

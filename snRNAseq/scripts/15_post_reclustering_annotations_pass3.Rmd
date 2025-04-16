@@ -666,6 +666,9 @@ VlnPlot(dataObject,
         split.by = "seurat_clusters")
 cluster19$gene[1:10]
 
+FeaturePlot(object = subset(dataObject, seurat_clusters == "19"),
+              reduction = "umap",
+              features = c("GAD1", "GAD2"))
 ```
 
 

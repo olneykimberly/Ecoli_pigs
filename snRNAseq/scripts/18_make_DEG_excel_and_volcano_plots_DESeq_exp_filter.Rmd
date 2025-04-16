@@ -43,9 +43,9 @@ cell_types <- c(unique(dataObject$individual_clusters))
 ```{r volcano_set_up}
 # Set up
 qval = 0.05
-posFC = 0.25
-negFC = -0.25
-FC = 0.25
+posFC = 1
+negFC = -1
+FC = 1
 ```
 
 ```{r volcano_group, warning=FALSE}
@@ -350,7 +350,7 @@ for (i in cell_types) {
   list_of_datasets[[i]] <- filtered_dataset
 }
 write.xlsx(list_of_datasets, file = paste0(
-    "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC0.25_up_regulated.xlsx"))
+    "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC1_up_regulated.xlsx"))
 
 # down-regulated
 list_of_datasets <- list()
@@ -361,5 +361,238 @@ for (i in cell_types) {
   list_of_datasets[[i]] <- filtered_dataset
 }
 write.xlsx(list_of_datasets, file = paste0(
-    "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC0.25_down_regulated.xlsx"))
+    "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC1_down_regulated.xlsx"))
+```
+
+# UpSet - Shared DEGs among cell types
+```{r}
+## Upregulated 
+# Load Excel file and get sheet names
+file_path <- "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC1_up_regulated.xlsx"
+sheets <- excel_sheets(file_path)
+
+# Read each sheet as a named list of gene vectors
+gene_lists <- lapply(sheets, function(sheet) {
+  read_excel(file_path, sheet = sheet)[[1]]  # Assuming genes are in first column
+})
+names(gene_lists) <- sheets
+data <- fromList(gene_lists)
+
+# UpSet
+upset(data, nsets = length(sheets), order.by = "freq", sets.bar.color = "red")
+
+path <- paste0("../results/UpSet/Ecoli_vs_Saline_qval0.05_abslogFC1_up_regulated")
+saveToPDF(paste0(path, ".pdf"), width = 8, height = 5)
+
+# Binary table with colnames:
+write.table(
+  data, "../results/UpSet/Ecoli_vs_Saline_qval0.05_abslogFC1_up_regulated.txt",
+  sep = "\t",
+  quote = FALSE
+)
+
+## Downregulated 
+# Load Excel file and get sheet names
+file_path <- "../results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline_qval0.05_abslogFC1_down_regulated.xlsx"
+sheets <- excel_sheets(file_path)
+
+# Read each sheet as a named list of gene vectors
+gene_lists <- lapply(sheets, function(sheet) {
+  read_excel(file_path, sheet = sheet)[[1]]  # Assuming genes are in first column
+})
+names(gene_lists) <- sheets
+data <- fromList(gene_lists)
+
+# UpSet
+upset(data, nsets = length(sheets), order.by = "freq", sets.bar.color = "blue")
+
+path <- paste0("../results/UpSet/Ecoli_vs_Saline_qval0.05_abslogFC1_down_regulated")
+saveToPDF(paste0(path, ".pdf"), width = 8, height = 5)
+
+# Binary table with colnames:
+write.table(
+  data, "../results/UpSet/Ecoli_vs_Saline_qval0.05_abslogFC1_down_regulated.txt",
+  sep = "\t",
+  quote = FALSE
+)
+```
+# gprofiler
+The DEGs are already ordered by smallest to largest adjusted p-value.
+```{r loop, echo=FALSE}
+# first read in the files
+for (i in cell_types) {
+  filepath <- paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,
+    "_Ecoli_vs_Saline_comparison_pseudobulk.txt")
+  df <- assign(paste0(i),
+         tryCatch(
+         read.delim(
+           filepath,
+           header = TRUE,
+           sep = "\t",
+           stringsAsFactors = FALSE
+         ), error=function(e) NULL))
+  subset(df, padj < qval)
+  up <- subset(df$gene, df$log2FoldChange > posFC, sort = FALSE)
+  assign(paste0(i, "_up"), up)
+  down <- subset(df$gene, df$log2FoldChange < negFC, sort = FALSE)
+  assign(paste0(i, "_down"), down)
+  
+  # gprofiler
+  gp_up <- gost(up, ordered_query = TRUE, organism = "sscrofa")
+  gp_down <- gost(down, ordered_query = TRUE, organism = "sscrofa")
+  
+  up_names = gconvert(up, organism = "sscrofa")
+  down_names = gconvert(down, organism = "sscrofa")
+  multi_gp = gost(list("down-regulated" = down_names, 
+                     "up-regulated" = up_names), ordered_query = TRUE, 
+                     organism = "sscrofa")
+  # rearrange so that up-regulated is on top 
+  neworder <- c("up-regulated","down-regulated")
+  multi_gp$result <- arrange(transform(multi_gp$result,
+             query=factor(query,levels=neworder)),query)
+  print(paste("i =", i))
+  # interactive plot 
+  gostplot(multi_gp, interactive = TRUE)
+  p_up_and_down = gostplot(multi_gp, interactive = FALSE)
+  p <- publish_gostplot(p_up_and_down)
+  #path <- paste0("../results/gprofiler/", i, "_up_and_down_gprofiler")
+  #pdf(paste0(path, ".pdf"), height = 6, width = 8)
+  #print(p)
+  #dev.off()
+  
+  # needed to convert to enrichResult object
+  up_names = gconvert(up, organism = "sscrofa") 
+  down_names = gconvert(down,organism = "sscrofa")
+  # enrichment analysis using gene names
+  multi_gp = gost(list("up-regulated" = up_names$name, "down-regulated" = down_names$name), 
+                  multi_query = FALSE, evcodes = TRUE, ordered_query = TRUE, organism = "sscrofa")
+  write.table(up_names, paste0("../results/gprofiler/", 
+                               i, "_up_gene_descriptions.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  write.table(down_names, paste0("../results/gprofiler/", 
+                               i, "_down_gene_descriptions.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  # reorder so that up-regulated is on top
+  neworder <- c("up-regulated","down-regulated")
+  multi_gp$result <- arrange(transform(multi_gp$result,
+             query=factor(query,levels=neworder)),query)
+
+  # modify the g:Profiler data frame
+  gp_mod = multi_gp$result[,c("query", "source", "term_id", "term_name", "p_value", 
+                            "query_size", "intersection_size","term_size", 
+                            "effective_domain_size","intersection")] 
+  # get the gene name size for each GO 
+  gp_mod$GeneRatio = paste0(gp_mod$intersection_size, "/", gp_mod$query_size)
+  gp_mod$BgRatio = paste0(gp_mod$term_size, "/", gp_mod$effective_domain_size) 
+  names(gp_mod) = c("Cluster", "Category", "ID", "Description", "p.adjust", 
+                    "query_size", "Count", "term_size", "effective_domain_size",
+                    "gene_name", "GeneRatio", "BgRatio") 
+  gp_mod$gene_name = gsub(",", "/", gp_mod$gene_name)
+  row.names(gp_mod) = make.names(gp_mod$ID, unique = TRUE)
+  # output table 
+  write.table(gp_mod, paste0("../results/gprofiler/", i, "_up_and_down_gp_mod_enrich.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Up-regulated
+gp_mod_up <- subset(gp_mod, Cluster == "up-regulated")
+gp_mod_up$p.adjust <- as.numeric(gp_mod_up$p.adjust)
+gp_up_clean <- na.omit(gp_mod_up[, c("Category", "ID", "p.adjust")])
+up_split_gp <- split(gp_up_clean, gp_up_clean$Category)
+up_top3_list <- lapply(up_split_gp, function(df) {
+  df[order(df$p.adjust), ][1:min(2, nrow(df)), ]
+})
+up_top3_terms <- do.call(rbind, up_top3_list)
+
+up_enrich_df <-
+  gp_mod_up[, c("ID", "Description", "p.adjust", "gene_name")]
+up_enrich_df_melt <- reshape2::melt(up_enrich_df)
+up_gene_char <- str_split(up_enrich_df_melt$gene_name, "/")
+# Name each list by the corresponding Description
+names(up_gene_char) <- up_enrich_df$Description
+write.table(gp_mod, paste0("../results/gprofiler/", i, "_up_gene_char.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+
+# Down-regulated
+gp_mod_down <- subset(gp_mod, Cluster == "down-regulated")
+gp_mod_down$p.adjust <- as.numeric(gp_mod_down$p.adjust)
+gp_down_clean <- na.omit(gp_mod_down[, c("Category", "ID", "p.adjust")])
+down_split_gp <- split(gp_down_clean, gp_down_clean$Category)
+down_top3_list <- lapply(down_split_gp, function(df) {
+  df[order(df$p.adjust), ][1:min(1, nrow(df)), ]
+})
+down_top3_terms <- do.call(rbind, down_top3_list)
+
+down_enrich_df <-
+  gp_mod_down[, c("ID", "Description", "p.adjust", "gene_name")]
+down_enrich_df_melt <- reshape2::melt(down_enrich_df)
+down_gene_char <- str_split(down_enrich_df_melt$gene_name, "/")
+# Name each list by the corresponding Description
+names(down_gene_char) <- down_enrich_df$Description
+write.table(gp_mod, paste0("../results/gprofiler/", i, "_down_gene_char.txt"), 
+              sep = "\t", quote = FALSE, row.names = FALSE)
+
+#--- Plot up-regulated with highlighted terms
+p_up = gostplot(gp_up, interactive = FALSE)
+plot_up <- publish_gostplot_intersect(p_up, highlight_terms = up_top3_terms$ID)
+path_up <- paste0("../results/gprofiler/", i, "_up_gprofiler")
+pdf(paste0(path_up, ".pdf"), height = 10, width = 8)
+print(plot_up)
+dev.off()
+
+#--- Plot down-regulated with highlighted terms
+p_down = gostplot(gp_down, interactive = FALSE)
+plot_down <- publish_gostplot_intersect(p_down, highlight_terms = down_top3_terms$ID)
+path_down <- paste0("../results/gprofiler/", i, "_down_gprofiler")
+pdf(paste0(path_down, ".pdf"), height = 6, width = 8)
+print(plot_down)
+dev.off()
+
+#--- Combine up/down into a single figure for each cell type
+row1 <- ggarrange(NULL, NULL, NULL, NULL, ncol = 4,
+                  labels = c("up-regulated", "", "", ""),
+                  font.label = list(size = 12, color = "red"))
+row3 <- ggarrange(NULL, NULL, NULL, NULL, ncol = 4,
+                  labels = c("down-regulated", "", "", ""),
+                  font.label = list(size = 12, color = "blue"))
+combind <- ggarrange(row1, plot_up, row3, plot_down, nrow = 4,
+                     labels = c("a)", "", "b)", ""),
+                     heights = c(0.1, 1.25, 0.05, 0.85),
+                     font.label = list(size = 12))
+
+path_comb <- paste0("../results/gprofiler/", i, "_up_and_down_gprofiler")
+pdf(paste0(path_comb, ".pdf"), width = 8.5, height = 11)
+print(combind)
+dev.off()
+}
+```
+
+# Counts data - pseudobulk 
+```{r protein_coding}
+gene_info <- read.delim("../rObjects/v7_ensembl_protein_coding_genes.txt")
+protein_coding_genes <- subset(gene_info, gene_biotype == "protein_coding")
+
+# Pseudo-bulk the counts based on sample, group, and cell type
+dataObject.pseudo <- AggregateExpression(
+    dataObject, 
+    assays = "RNA", # DESeq works with raw counts
+    features = protein_coding_genes$gene_name,
+    return.seurat = TRUE, 
+    group.by = c("sample", "group", "individual_clusters")
+)
+
+# Loop through each cell type to perform differential expression analysis for each condition
+for (cell_type in cell_types) {
+    # group comparison with covariates
+    dataObject.pseudo$celltype.group <- paste(dataObject.pseudo$individual_clusters, dataObject.pseudo$group, sep = "_")
+    Idents(dataObject.pseudo) <- "celltype.group"
+    current_cells <- WhichCells(dataObject.pseudo, idents = paste(cell_type, c("Ecoli", "Saline"), sep = "_"))
+    pseudo_bulk_counts <- GetAssayData(dataObject.pseudo, layer = "counts")[, current_cells]
+    gene_means <- rowMeans(pseudo_bulk_counts)
+    gene_means_summary <- summary(gene_means)
+    # Filter genes with mean expression greater than 1st Qu. 
+    filtered_genes <- names(gene_means[gene_means > gene_means_summary[[2]]])
+    filtered_counts <- pseudo_bulk_counts[filtered_genes, ]
+    filtered_counts <- as.data.frame(filtered_counts)
+    pseudo_bulk_meta <- dataObject.pseudo@meta.data[current_cells, ]
+}
 ```
