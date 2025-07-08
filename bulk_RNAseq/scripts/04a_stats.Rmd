@@ -1,0 +1,314 @@
+---
+title: "Differential expression Ecoli & Saline"
+author: "Kimberly Olney, PhD"
+date: "July 8th 2025"
+output:
+  pdf_document: default
+---
+
+Compare Ecoli vs Saline
+
+# Set up working enivornment
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = ".")
+getwd()
+
+library(ggplot2)
+library(ggpubr)
+library(purrr)
+library(car)
+library(reshape)
+library(ggforce)
+library("knitr")
+```
+
+```{r libraries, message=FALSE, warning=FALSE}
+source("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/file_paths_and_colours.R")
+```
+
+# Test for differences between the two groups (contorls and Ecoli) for continuous variables
+t-test to determine if there is a significant difference between the means of two group
+first we determine if the assumptions of a t-test are met. If not, we will log-transform the data and redetermine if the assumptions are met. 
+If the assumptions are still not met, we will use a  nonparametric Wilcoxon rank-sum test. 
+A Wilcoxon rank-sum test or as known as a Mann Whitney Wilcoxon Test, is used to test whether two groups have the same distibution. 
+
+two sample t-test
+    For hypotheses about the difference between the means of two populations. 
+
+First state the null and alternative hypotheses
+Ho: Ua - Ub = 0 
+    The mean body weight, mean dose is ml per hour, mean mins from injection to sacrifice are the same between Saline and Ecoli pigs. 
+ Ho: Ua - Ub != 0 
+     The mean body weight, mean dose is ml per hour, mean mins from injection to sacrifice are NOT the same between Saline and Ecoli pigs. 
+ the test is carried out independently for each variable being tested. 
+
+
+testing for normality
+calculate variance and standard deviation (sd)
+welch's t-test (does not assume equal variance but does assume normality)
+wilcoxon/Mann-whit test for differences in distributions. (does not test the mean or sd) 
+
+Levene Test - homogeneity of variance across groups.
+homogeneity assumption: the population variances of the dependent variable must equal for all groups. 
+Can ignore this assumption if roughly equal sample sizes for each group.
+```{r}
+variable_names <- c(
+"start_heart_rate", 
+"end_heart_rate", 
+"start_temp", 
+"end_temp", 
+"start_SpO2",
+"end_SpO2", 
+"start_MAP",
+"end_MAP",
+"age_days")
+
+tests <- c("Saline_mean","Ecoli_mean","Saline_stdv","Ecoli_stdv",
+           "Saline_shapiro_pval","Ecoli_shapiro_pval","levene","t_test_t",
+           "t_test_pval","wilcoxon_pval")
+clinical_stats <- matrix(0,
+                         nrow = length(variable_names),
+                         ncol = length(tests),
+                         dimnames = list(variable_names, tests))
+clinical_stats <- as.data.frame(clinical_stats)
+```
+
+# Run tests
+```{r}
+# Loop through variables
+for (i in 1:length(variable_names)) {
+
+  # Subset values by group
+  values <- as.numeric(metadata[, variable_names[i]])
+  group <- factor(metadata$group)
+  Saline_values <- metadata[metadata$group == "Saline", variable_names[i]]
+  Ecoli_values <- metadata[metadata$group == "Ecoli", variable_names[i]]
+  
+  # Welch two sample t-test
+  t_test <- t.test(Saline_values, Ecoli_values)
+  t_test_t <- t_test$statistic
+  t_test_pval <- t_test$p.value
+  
+  # Add to table
+  clinical_stats[i, "Saline_mean"] <- round(as.numeric(t_test$estimate[1]),4)
+  clinical_stats[i, "Ecoli_mean"] <- round(as.numeric(t_test$estimate[2]),4)
+  clinical_stats[i, "t_test_t"] <- round(t_test_t,4)
+  clinical_stats[i, "t_test_pval"] <- round(t_test_pval,4)
+  
+  # Shapiro-Wilk test, normality test
+  Saline_shapiro <- shapiro.test(Saline_values)
+  Ecoli_shapiro <- shapiro.test(Ecoli_values)
+  
+  # Add to table
+  clinical_stats[i, "Saline_shapiro_pval"] <- round(Saline_shapiro$p.value,4)
+  clinical_stats[i, "Ecoli_shapiro_pval"] <- round(Ecoli_shapiro$p.value,4)
+  
+  # Variance and standard deviation
+  Saline_var <- var(Saline_values)
+  Ecoli_var <- var(Ecoli_values)
+ 
+  # Add to table 
+  clinical_stats[i, "Saline_stdv"] <- round(sqrt(Saline_var),4)
+  clinical_stats[i, "Ecoli_stdv"] <- round(sqrt(Ecoli_var),4)
+  
+  # Two-sample Wilcoxon / Mann-Whitney
+  wil <- wilcox.test(Saline_values, Ecoli_values)
+  
+  # Add to table
+  clinical_stats[i, "wilcoxon_pval"] <- round(wil$p.value, 4)
+  
+  # Levene's test
+  levTest <- leveneTest(values ~ group)
+  lev <- levTest$`Pr(>F)`
+  lev_naomit <- as.numeric(na.omit(lev))
+  
+  # Add to table
+  clinical_stats[i, "levene"] <- round(lev_naomit, 4)
+}
+```
+
+# Output clinical stats table
+```{r}
+write.table(clinical_stats,
+            "../results/clinical_stats/clinincal_stats.tsv",
+            quote = FALSE,
+            sep = "\t")
+```
+
+# Violin of heart rate and body temperature 
+```{r}
+#-- heart rate
+hr_df <- metadata[c("group", "start_heart_rate", "end_heart_rate")]
+hr_df$group <- factor(hr_df$group, levels = c("Saline", "Ecoli"))
+hr_df <- melt(hr_df)
+supp.labs <- c("Starting heart rate", "Final heart rate")
+names(supp.labs) <- c("start_heart_rate", "end_heart_rate")
+
+hr_plot <- ggplot(hr_df, aes(x = group, y = value, color = group))  +
+    geom_violin() + 
+    scale_color_manual(values = c("black", "green4")) +
+    geom_boxplot(width = 0.1, outlier.size = -1, outlier.shape = NA) +
+    geom_sina(aes(shape = factor(group)),
+                size = .5) +
+    ggplot2::facet_grid(~ variable, labeller = labeller(variable = supp.labs)) +
+    theme_bw() +
+  theme(
+    plot.margin = margin(0.2, 0.4, 0.3, 0.2, "cm"),  
+    strip.text = element_text(size = 8.5, margin = margin(1,0,1.2,0)),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    panel.spacing = unit(0,'lines'), 
+    plot.title = element_text(size = 8, vjust = -1, hjust = 0),
+    axis.text.x=element_text(size = 8),
+    axis.title.x = element_blank(), 
+    axis.ticks.x=element_blank(), 
+    axis.title.y = element_text(size = 8), 
+    axis.text.y = element_text(size = 8, margin = margin(r = -2)),
+    axis.ticks.y=element_blank()) +
+    labs(
+    y = "beats per minute"
+  ) + scale_shape_manual(
+      values = c(15, 19)) +
+  scale_y_continuous(breaks = seq(50, 300, by =50), limits = c(50, 300)) 
+hr_plot
+hr_plot <- hr_plot +  theme(panel.spacing.x = unit(0.7, "lines"))
+```
+
+```{r}
+#-- Temp
+temp_df <- metadata[c("group", "start_temp", "end_temp")]
+temp_df$group <- factor(temp_df$group, levels = c("Saline", "Ecoli"))
+temp_df <- melt(temp_df)
+supp.labs <- c("Starting temperature", "Final temperature")
+names(supp.labs) <- c("start_temp", "end_temp")
+
+temp_plot <- ggplot(temp_df, aes(x = group, y = value, color = group))  +
+    geom_violin() + 
+    scale_color_manual(values = c("black", "green4")) +
+    geom_boxplot(width = 0.1, outlier.size = -1, outlier.shape = NA) +
+    geom_sina(aes(shape = factor(group)),
+                size = .5) +
+    ggplot2::facet_grid(~ variable, labeller = labeller(variable = supp.labs)) +
+    theme_bw() +
+  theme(
+    plot.margin = margin(0.2, 0.4, 0.3, 0.2, "cm"),  
+    strip.text = element_text(size = 8.5, margin = margin(1,0,1.2,0)),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    panel.spacing = unit(0,'lines'), 
+    plot.title = element_text(size = 8, vjust = -1, hjust = 0),
+    axis.text.x=element_text(size = 8),
+    axis.title.x = element_blank(), 
+    axis.ticks.x=element_blank(), 
+    axis.title.y = element_text(size = 8), 
+    axis.text.y = element_text(size = 8, margin = margin(r = -2)),
+    axis.ticks.y=element_blank()) +
+    labs(
+    y = "Fahrenheit"
+  ) + scale_shape_manual(
+      values = c(15, 19)) +
+  scale_y_continuous(breaks = seq(95, 115, by =5), limits = c(95, 118)) 
+ #   sec.axis = sec_axis(~ . *9/5 +32)
+temp_plot
+temp_plot <- temp_plot +  theme(panel.spacing.x = unit(0.7, "lines"))
+```
+```{r}
+#-- SpO2
+Sp_df <- metadata[c("group", "start_SpO2", "end_SpO2")]
+Sp_df$group <- factor(Sp_df$group, levels = c("Saline", "Ecoli"))
+Sp_df <- melt(Sp_df)
+supp.labs <- c("Starting SpO2", "Final SpO2")
+names(supp.labs) <- c("start_SpO2", "end_SpO2")
+
+Sp_plot <- ggplot(Sp_df, aes(x = group, y = value, color = group))  +
+    geom_violin() + 
+    scale_color_manual(values = c("black", "green4")) +
+    geom_boxplot(width = 0.1, outlier.size = -1, outlier.shape = NA) +
+    geom_sina(aes(shape = factor(group)),
+                size = .5) +
+    ggplot2::facet_grid(~ variable, labeller = labeller(variable = supp.labs)) +
+    theme_bw() +
+  theme(
+    plot.margin = margin(0.2, 0.4, 0.3, 0.2, "cm"), 
+    strip.text = element_text(size = 8.5, margin = margin(1,0,1.2,0)),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    panel.spacing = unit(0,'lines'), 
+    plot.title = element_text(size = 8, vjust = -1, hjust = 0),
+    axis.text.x=element_text(size = 8),
+    axis.title.x = element_blank(), 
+    axis.ticks.x=element_blank(), 
+    axis.title.y = element_text(size = 8), 
+    axis.text.y = element_text(size = 8, margin = margin(r = -2)),
+    axis.ticks.y=element_blank()) +
+    labs(
+    y = "% Oxygen Saturation"
+  ) + scale_shape_manual(
+      values = c(15, 19)) +
+  scale_y_continuous(breaks = seq(90, 104, by =2), limits = c(90, 104)) 
+Sp_plot
+Sp_plot <- Sp_plot +  theme(panel.spacing.x = unit(0.7, "lines"))
+```
+
+```{r}
+#-- MAP
+MAP_df <- metadata[c("group", "start_MAP", "end_MAP")]
+MAP_df$group <- factor(MAP_df$group, levels = c("Saline", "Ecoli"))
+MAP_df <- melt(MAP_df)
+supp.labs <- c("Starting MAP", "Final MAP")
+names(supp.labs) <- c("start_MAP", "end_MAP")
+
+MAP_plot <- ggplot(MAP_df, aes(x = group, y = value, color = group))  +
+    geom_violin() + 
+    scale_color_manual(values = c("black", "green4")) +
+    geom_boxplot(width = 0.1, outlier.size = -1, outlier.shape = NA) +
+    geom_sina(aes(shape = factor(group)),
+                size = .5) +
+    ggplot2::facet_grid(~ variable, labeller = labeller(variable = supp.labs)) +
+    theme_bw() +
+  theme(
+    plot.margin = margin(0.2, 0.4, 0.3, 0.2, "cm"),  
+    strip.text = element_text(size = 8.5, margin = margin(1,0,1.2,0)),
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    panel.spacing = unit(0,'lines'), 
+    plot.title = element_text(size = 8, vjust = -1, hjust = 0),
+    axis.text.x=element_text(size = 8),
+    axis.title.x = element_blank(), 
+    axis.ticks.x=element_blank(), 
+    axis.title.y = element_text(size = 8), 
+    axis.text.y = element_text(size = 8, margin = margin(r = -2)),
+    axis.ticks.y=element_blank()) +
+    labs(
+    y = "Mean arterial pressure"
+  ) + scale_shape_manual(
+      values = c(15, 19)) +
+  scale_y_continuous(breaks = seq(45, 110, by =15), limits = c(45, 110)) 
+MAP_plot
+MAP_plot <- MAP_plot +  theme(panel.spacing.x = unit(0.7, "lines"))
+```
+
+# Combine plot 
+```{r}
+
+row1 <- 
+    ggarrange(
+    hr_plot,
+    temp_plot,
+    Sp_plot,
+    MAP_plot, 
+    ncol = 2,
+    nrow = 2, 
+    labels = c("A", "B", "C", "D"),
+    font.label = list(size = 10)
+  )
+
+row1
+path <- paste0("../results/manuscript_figures/Supplemental_Figure_",
+               "clinical_stats")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
+```

@@ -100,7 +100,10 @@ brain_metadata <- brain_metadata[brain_metadata$pig_id %in% keep_pigs, ]
 metadata <- brain_metadata
 metadata$sample_ID <- paste0(metadata$sample, "_1_BR")
 # clean up
-rm(brain_metadata)
+#rm(brain_metadata)
+
+metadata_extra <- read.delim("/tgen_labs/jfryer/kolney/Ecoli_pigs/metadata_extra_clinical.txt", header = TRUE, sep = "\t")
+metadata <- merge(metadata, metadata_extra, by = "pig_id")
 
 #------------------------------- Ecoli pig snRNAseq info
 #sn_metadata <- read.delim("/tgen_labs/jfryer/projects/sepsis/pig/Ecoli/Ecoli_pig_snRNA_seq_info.txt", header = TRUE, sep = "\t")
@@ -295,6 +298,15 @@ generate_heatmap <- function(go_term, gene_list, DEG_df, top_df) {
 }
 
 addSmallLegend <- function(myPlot, pointSize = 6, textSize = 10, spaceLegend = .5) {
+  myPlot +
+    guides(shape = guide_legend(override.aes = list(size = pointSize)),
+           color = guide_legend(override.aes = list(size = pointSize))) +
+    theme(legend.title = element_text(size = textSize), 
+          legend.text  = element_text(size = textSize),
+          legend.key.size = unit(spaceLegend, "lines"))
+}
+
+addSmallLegend_UMAP <- function(myPlot, pointSize = 6, textSize = 8, spaceLegend = .5) {
   myPlot +
     guides(shape = guide_legend(override.aes = list(size = pointSize)),
            color = guide_legend(override.aes = list(size = pointSize))) +
