@@ -1,0 +1,541 @@
+---
+title: "CellChat - Comparison analysis"
+author: "Kimberly Olney, PhD"
+date: "July 8th 2025"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+```
+
+# Libraris, paths, colors
+```{r echo=FALSE, message=FALSE}
+source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
+color.panel <- dittoColors()
+library(NatParksPalettes)
+library("readxl")
+library(patchwork)
+library(ComplexHeatmap)
+library(BiocNeighbors)
+library(CellChat)
+library(reticulate)
+library(ComplexHeatmap)
+
+use_virtualenv("cellchat_env_fixed", required = TRUE) 
+#BiocManager::install("BiocNeighbors")
+#devtools::install_github("jinworks/CellChat")
+
+data.dir <- '../results/CellChat_Ecoli_vs_Saline/'
+dir.create(data.dir)
+
+my_seurat_theme <- function() {
+  theme_classic() + # Start with a base theme
+    theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8), 
+    theme(legend.position = "none")
+    )
+}
+```
+
+# install umap_learn
+```{r eval = FALSE}
+env_name <- "cellchat_env_fixed" # Use a new name to avoid conflicts
+virtualenv_create(envname = env_name, python_version = "3.9", force = TRUE) 
+use_virtualenv(env_name, required = TRUE)
+# Install umap-learn and NumPy *together* at specific versions
+# This is crucial for resolving compatibility issues.
+py_install(packages = c('umap-learn==0.5.3', 'numpy==1.26.4', 'scipy'), envname = env_name, pip = TRUE) 
+# Verify the Python configuration
+message("Verifying Python configuration:")
+py_config()
+message("Is the Python interpreter path pointing to your new 'cellchat_env_fixed' environment?")
+
+# VERY IMPORTANT - Restart  R session
+```
+
+# Read in object
+```{r read_object}
+# read object
+dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+
+# inspect
+dataObject
+Layers(dataObject)
+# List of cell types to analyze
+cell_types <- c(unique(dataObject$individual_clusters))
+
+group_renaming_map <- c(
+  "Ecoli" = "Saline",
+  "Saline" = "Ecoli")
+
+# 3. Apply the renaming to your specified metadata column
+# Make sure to replace 'your_group_column_name' with the actual column name.
+dataObject$group <- plyr::mapvalues(
+  x = dataObject$group,
+  from = names(group_renaming_map),
+  to = unname(group_renaming_map)
+)
+
+# 4. Verify the changes
+unique(dataObject$group)
+dataObject$samples <- dataObject$Sample_ID
+```
+
+# CellChat - Comparison analysis of multiple datasets using CellChat
+https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/Comparison_analysis_of_multiple_datasets.html
+
+```{r}
+CellChatDB <- CellChatDB.human
+# use all CellChatDB except for "Non-protein Signaling" for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB)
+```
+
+### Split Seurat Object
+```{r split}
+future::plan("multisession", workers = 4) # do parallel
+
+# Subset the Seurat object by group
+seurat_ecoli <- subset(dataObject, subset = group == "Ecoli")
+seurat_saline <- subset(dataObject, subset = group == "Saline")
+```
+
+#### Ecoli 
+```{r ecoli, eval = FALSE}
+## Ecoli 
+cellchat_ecoli <- createCellChat(object = seurat_ecoli, group.by = "individual_clusters", assay = "SCT") 
+cellchat_ecoli@DB <- CellChatDB.use
+cellchat_ecoli <- subsetData(cellchat_ecoli) # This step is necessary even if using the whole database
+cellchat_ecoli <- identifyOverExpressedGenes(cellchat_ecoli)
+cellchat_ecoli <- identifyOverExpressedInteractions(cellchat_ecoli) # 1494
+
+cellchat_ecoli <- computeCommunProb(cellchat_ecoli, type = "triMean")
+cellchat_ecoli <- filterCommunication(cellchat_ecoli, min.cells = 10)
+cellchat_ecoli <- computeCommunProbPathway(cellchat_ecoli)
+cellchat_ecoli <- aggregateNet(cellchat_ecoli)
+cellchat_ecoli <- netAnalysis_computeCentrality(cellchat_ecoli, slot.name = "netP") 
+saveRDS(cellchat_ecoli, file = "../rObjects/cellchat_ecoli.rds")
+```
+
+#### Saline
+```{r saline, eval = FALSE}
+## Saline
+cellchat_saline <- createCellChat(object = seurat_saline, group.by = "individual_clusters", assay = "SCT") 
+cellchat_saline@DB <- CellChatDB.use
+cellchat_saline <- subsetData(cellchat_saline) # This step is necessary even if using the whole database
+cellchat_saline <- identifyOverExpressedGenes(cellchat_saline)
+cellchat_saline <- identifyOverExpressedInteractions(cellchat_saline) # 1450
+options(future.globals.maxSize = 2000 * 1024^2) 
+
+cellchat_saline <- computeCommunProb(cellchat_saline, type = "triMean")
+cellchat_saline <- filterCommunication(cellchat_saline, min.cells = 10)
+cellchat_saline <- computeCommunProbPathway(cellchat_saline)
+cellchat_saline <- aggregateNet(cellchat_saline)
+cellchat_saline <- netAnalysis_computeCentrality(cellchat_saline, slot.name = "netP") 
+saveRDS(cellchat_saline, file = "../rObjects/cellchat_saline.rds")
+```
+
+### Load CellChat object of each dataset and merge them together
+```{r}
+# After you have run CellChat on each and saved them as .rds files, you can then load and merge them as per the CellChat tutorial example you provided:
+cellchat_ecoli <- readRDS("../rObjects/cellchat_ecoli.rds")
+cellchat_saline <- readRDS("../rObjects/cellchat_saline.rds")
+object.list <- list(Saline = cellchat_saline, Ecoli = cellchat_ecoli)
+cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+cellchat
+cellchat@meta$group <- factor(cellchat@meta$group, levels = c("Saline", "Ecoli"))
+```
+
+# Part 1 - Identify altered interactions and cell populations
+Compare the total number of interactions and interaction strength
+```{r}
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), color.use = c("black", "green3"))
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight", color.use = c("black", "green3"))
+compare_interactions <- gg1 + gg2
+
+file_name <- paste0(data.dir, "total_interactions_and_interaction_strength.pdf")
+pdf(file_name, width = 5, height = 3) 
+print(compare_interactions)
+dev.off()
+```
+
+Compare the number of interactions and interaction strength among different cell populations
+### (A) Circle plot showing differential number of interactions or interaction strength among different cell populations across two datasets
+```{r}
+file_name <- paste0(data.dir, "circle_plot_interaction_among_celltypes.pdf")
+pdf(file_name, width = 7, height = 5) 
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight")
+dev.off()
+```
+
+### (B) Heatmap showing differential number of interactions or interaction strength among different cell populations across two datasets
+```{r}
+gg1 <- netVisual_heatmap(cellchat)
+#> Do heatmap based on a merged object
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+#> Do heatmap based on a merged object
+compare_heatmap <- (gg1 + gg2)
+file_name <- paste0(data.dir, "heatmap_interactions_and_interaction_strength.pdf")
+pdf(file_name, width = 9, height = 4) 
+print(compare_heatmap)
+dev.off()
+```
+## (C) Circle plot showing the number of interactions or interaction strength among different cell populations across multiple datasets
+```{r}
+file_name <- paste0(data.dir, "circle_number_of_interactions_and_strength_Salin_and_Ecoli.pdf")
+pdf(file_name, width = 9, height = 4) 
+weight.max <- getMaxWeight(object.list, attribute = c("idents","count"))
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_circle(object.list[[i]]@net$count, weight.scale = T, label.edge= F, edge.weight.max = weight.max[2], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(object.list)[i]))
+}
+dev.off()
+```
+
+## (D) Circle plot showing the differential number of interactions or interaction strength among cell types
+```{r}
+group.cellType <- c(rep("mural", 2), rep("VLMC", 2), rep("endothelial", 2))
+group.cellType <- factor(group.cellType, levels = c("mural", "VLMC", "endothelial"))
+object.list <- lapply(object.list, function(x) {mergeInteractions(x, group.cellType)})
+cellchat <- mergeCellChat(object.list, add.names = names(object.list))
+
+
+weight.max <- getMaxWeight(object.list, slot.name = c("idents", "net", "net"), attribute = c("idents","count", "count.merged"))
+
+file_name <- paste0(data.dir, "circle_number_of_interactions_and_strength_vasculature.pdf")
+pdf(file_name, width = 9, height = 4) 
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_circle(object.list[[i]]@net$count.merged, weight.scale = T, label.edge= T, edge.weight.max = weight.max[3], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(object.list)[i]))
+}
+dev.off()
+```
+
+Difference between datasets 
+```{r}
+file_name <- paste0(data.dir, "circle_number_of_interactions_and_strength_difference_vasculature.pdf")
+pdf(file_name, width = 9, height = 4) 
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "count.merged", label.edge = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight.merged", label.edge = T)
+dev.off()
+```
+
+## Compare the major sources and targets in a 2D space
+### (A) Identify cell populations with significant changes in sending or receiving signals
+```{r}
+num.link <- sapply(object.list, function(x) {rowSums(x@net$count) + colSums(x@net$count)-diag(x@net$count)})
+weight.MinMax <- c(min(num.link), max(num.link)) # control the dot size in the different datasets
+gg <- list()
+for (i in 1:length(object.list)) {
+  gg[[i]] <- netAnalysis_signalingRole_scatter(object.list[[i]], title = names(object.list)[i], weight.MinMax = weight.MinMax)
+}
+#> Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+#> Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+file_name <- paste0(data.dir, "sources_and_targets_2D.pdf")
+pdf(file_name, width = 9, height = 4) 
+patchwork::wrap_plots(plots = gg)
+dev.off()
+```
+
+### (B) Identify the signaling changes of specific cell populations
+```{r}
+#> Visualizing differential outgoing and incoming signaling changes from saline to ecolig
+celltypes <- unique(cellchat@meta$individual_clusters)
+
+for(celltype in celltypes){
+  file_name <- paste0(data.dir, celltype, "_signal_change.pdf")
+  pdf(file_name, width = 6, height = 4) 
+  gg1 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = celltype, color.use = c("grey", "black", "green3"))
+  print(gg1) # Use print() when plotting within a loop with ggplot2
+  dev.off() # Corrected: dev.off() needs parentheses
+}
+```
+
+# Part II: Identify altered signaling with distinct network architecture and interaction strength
+
+### Functional similarity
+Identify signaling groups based on their functional similarity
+```{r}
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
+#> Compute signaling network similarity for datasets 1 2
+cellchat <- netEmbedding(cellchat, type = "functional")
+#> Manifold learning of the signaling networks for datasets 1 2
+cellchat <- netClustering(cellchat, type = "functional")
+#> Classification learning of the signaling networks for datasets 1 2
+# Visualization in 2D-space
+file_name <- paste0(data.dir, "net_clustering_functional.pdf")
+pdf(file_name, width = 8, height = 5) 
+netVisual_embeddingPairwise(cellchat, type = "functional", label.size = 3.5)
+dev.off()
+```
+
+### Structure similarity
+Identify signaling groups based on structure similarity
+```{r}
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "structural")
+cellchat <- netEmbedding(cellchat, type = "structural")
+cellchat <- netClustering(cellchat, type = "structural")
+# Visualization in 2D-space
+file_name <- paste0(data.dir, "net_clustering_structural.pdf")
+pdf(file_name, width = 8, height = 5) 
+netVisual_embeddingPairwise(cellchat, type = "structural", label.size = 3.5)
+dev.off()
+```
+
+### Rank
+```{r}
+file_name <- paste0(data.dir, "rank_functional.pdf")
+pdf(file_name, width = 8, height = 6) 
+rankSimilarity(cellchat, type = "functional")
+dev.off()
+
+file_name <- paste0(data.dir, "rank_structural.pdf")
+pdf(file_name, width = 8, height = 6) 
+rankSimilarity(cellchat, type = "structural")
+dev.off()
+```
+
+## Identify altered signaling with distinct interaction streng
+#### (A) Compare the overall information flow of each signaling pathway or ligand-receptor pair
+This bar chart can be plotted in a stacked mode or not. Significant signaling pathways were ranked based on differences in the overall information flow within the inferred networks between NL and LS skin. When setting do.stat = TRUE, a paired Wilcoxon test is performed to determine whether there is a significant difference of the signaling information flow between two conditions.
+```{r}
+gg1 <- rankNet(cellchat, mode = "comparison", measure = "weight", sources.use = NULL, targets.use = NULL, stacked = T, do.stat = TRUE, color.use = c("black", "green3"))
+gg2 <- rankNet(cellchat, mode = "comparison", measure = "weight", sources.use = NULL, targets.use = NULL, stacked = F, do.stat = TRUE, color.use = c("black", "green3"))
+LR_pair <- (gg1 + gg2)
+
+file_name <- paste0(data.dir, "significant_difference_of_signaling_flow_wilcoxon.pdf")
+pdf(file_name, width = 8, height = 6) 
+print(LR_pair)
+dev.off()
+```
+#### (B) Compare outgoing (or incoming) signaling patterns associated with each cell population
+```{r}
+i = 1
+# combining all the identified signaling pathways from different datasets 
+
+### outgoing
+pathway.union <- union(object.list[[i]]@netP$pathways, object.list[[i+1]]@netP$pathways)
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "outgoing", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 14)
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "outgoing", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 14)
+file_name <- paste0(data.dir, "heatmap_outgoing.pdf")
+pdf(file_name, width = 6.5, height = 8) 
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+dev.off()
+
+### incoming
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "incoming", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 14, color.heatmap = "GnBu")
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "incoming", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 14, color.heatmap = "GnBu")
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+file_name <- paste0(data.dir, "heatmap_incoming.pdf")
+pdf(file_name, width = 6.5, height = 8) 
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+dev.off()
+
+### all 
+ht1 = netAnalysis_signalingRole_heatmap(object.list[[i]], pattern = "all", signaling = pathway.union, title = names(object.list)[i], width = 5, height = 14, color.heatmap = "OrRd")
+ht2 = netAnalysis_signalingRole_heatmap(object.list[[i+1]], pattern = "all", signaling = pathway.union, title = names(object.list)[i+1], width = 5, height = 14, color.heatmap = "OrRd")
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+file_name <- paste0(data.dir, "heatmap_all.pdf")
+pdf(file_name, width = 6.5, height = 8) 
+draw(ht1 + ht2, ht_gap = unit(0.5, "cm"))
+dev.off()
+```
+# Part III: Identify the up-gulated and down-regulated signaling ligand-receptor pairs
+Identify dysfunctional signaling by comparing the communication probabities
+
+### L-R among cell types
+CellChat can compare the communication probabilities mediated by L-R pairs from certain cell groups to other cell groups. This can be done by setting comparison in the function netVisual_bubble.
+```{r}
+celltypes <- unique(cellchat@meta$individual_clusters)
+
+for(celltype in celltypes){
+  file_name <- paste0(data.dir, "L-R_", celltype, "_to_all_other_celltypes.pdf")
+  pdf(file_name, width = 8, height = 10) 
+  nv_plot <- netVisual_bubble(cellchat, sources.use = celltype, targets.use = c(1:8),  comparison = c(1, 2), angle.x = 45, color.text = c("black", "green3"))
+  print(nv_plot)
+  dev.off() # Corrected: dev.off() needs parentheses
+}
+```
+
+### Up and downregulated signaling L-R pairs
+Moreover, CellChat can identify the up-regulated (increased) and down-regulated (decreased) signaling ligand-receptor pairs in one dataset compared to the other dataset. This can be done by specifying max.dataset and min.dataset in the function netVisual_bubble. The increased signaling means these signaling have higher communication probability (strength) in the second dataset compared to the first dataset. The ligand-receptor pairs shown in the bubble plot can be accessed via gg1$data.
+```{r}
+celltypes <- c("astrocyte", "opc", "microglia", "neuron", "oligodendrocyte", "VLMC", "endothelial", "mural")
+for(i in celltypes){
+  file_name <- paste0(data.dir, "L-R_", i, "_increased_and_decreased_in_Ecoli_compared_to_Saline.pdf")
+  gg1 <- netVisual_bubble(cellchat, sources.use = i, targets.use = c(1:8),  comparison = c(1, 2), max.dataset = 2, title.name = "Increased signaling in Ecoli", angle.x = 45, remove.isolate = T, color.text = c("black", "green3"))
+  gg2 <- netVisual_bubble(cellchat, sources.use = i, targets.use = c(1:8),  comparison = c(1, 2), max.dataset = 1, title.name = "Decreased signaling in Ecoli", angle.x = 45, remove.isolate = T, color.text = c("black", "green3"))
+  combined <- (gg1 + gg2)
+
+  pdf(file_name, width = 12, height = 8) 
+  print(combined)
+  dev.off()
+}
+```
+
+### Differential expression analysis  
+Identify dysfunctional signaling by using differential expression analysis
+```{r}
+# define a positive dataset, i.e., the dataset with positive fold change against the other dataset
+pos.dataset = "Ecoli"
+# define a char name used for storing the results of differential expression analysis
+features.name = paste0(pos.dataset, ".merged")
+
+# perform differential expression analysis 
+cellchat <- identifyOverExpressedGenes(cellchat, group.dataset = "datasets", pos.dataset = pos.dataset, features.name = features.name, only.pos = FALSE, thresh.pc = 0.1, thresh.fc = 0.05,thresh.p = 0.05, group.DE.combined = FALSE) 
+#> Use the joint cell labels from the merged CellChat object
+
+# map the results of differential expression analysis onto the inferred cell-cell communications to easily manage/subset the ligand-receptor pairs of interest
+net <- netMappingDEG(cellchat, features.name = features.name, variable.all = TRUE)
+# extract the ligand-receptor pairs with upregulated ligands in "control"
+net.up <- subsetCommunication(cellchat, net = net, datasets = "Ecoli",ligand.logFC = 0.05, receptor.logFC = NULL)
+# extract the ligand-receptor pairs with upregulated ligands and upregulated receptors in "disease", i.e.,downregulated in control
+net.down <- subsetCommunication(cellchat, net = net, datasets = "Saline",ligand.logFC = -0.05, receptor.logFC = NULL)
+```
+
+Since the signaling genes in the net.up and net.down might be complex with multi-subunits, we can do further deconvolution to obtain the individual signaling genes.
+```{r}
+gene.up <- extractGeneSubsetFromPair(net.up, cellchat)
+gene.down <- extractGeneSubsetFromPair(net.down, cellchat)
+
+write.table(gene.up, paste0(data.dir, "gene_up.txt"), row.names = F, quote = F, sep = "\t")
+write.table(gene.down, paste0(data.dir, "gene_down.txt"), row.names = F, quote = F, sep = "\t")
+```
+
+# Significant outgoing/incoming/both signaling
+#### df net
+```{r}
+df.net <- subsetCommunication(cellchat)
+
+df.net_ecoli<- df.net$Ecoli 
+write.table(df.net_ecoli, paste0(data.dir, "df_net_ecoli.txt"), row.names = F, quote = F, sep = "\t")
+
+df.net_saline <- df.net$Saline 
+write.table(df.net_saline, paste0(data.dir, "df_net_saline.txt"), row.names = F, quote = F, sep = "\t")
+```
+
+Find all the significant outgoing/incoming/both signaling according to the customized features and cell groups of interest
+```{r}
+df <- findEnrichedSignaling(object.list[[2]], features = c("VCAM", "CXCL10"), idents = c("astrocyte", "opc", "microglia", "neuron", "oligodendrocyte", "VLMC", "endothelial", "mural"), pattern ="both")
+rm(df)
+```
+
+Visualize the identified up-regulated and down-regulated signaling ligand-receptor pairs
+### (A) Bubble plot
+```{r eval = FALSE}
+pairLR.use.up = net.up[, "interaction_name", drop = F]
+gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, sources.use = 4, targets.use = c(1:8), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Up-regulated signaling in ", names(object.list)[2]))
+#> Comparing communications on a merged object
+pairLR.use.down = net.down[, "interaction_name", drop = F]
+gg2 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, sources.use = 4, targets.use = c(1:8), comparison = c(1, 2),  angle.x = 90, remove.isolate = T,title.name = paste0("Down-regulated signaling in ", names(object.list)[2]))
+#> Comparing communications on a merged object
+gg1 + gg2
+```
+
+### (B) Chord diagram
+```{r eval=FALSE}
+# Chord diagram
+netVisual_chord_gene(object.list[[2]], sources.use = 4, targets.use = c(1:8), slot.name = 'net', net = net.up, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Up-regulated signaling in ", names(object.list)[2]))
+
+
+netVisual_chord_gene(object.list[[1]], sources.use = 4, targets.use = c(1:8), slot.name = 'net', net = net.down, lab.cex = 0.8, small.gap = 3.5, title.name = paste0("Down-regulated signaling in ", names(object.list)[2]))
+#> You may try the function `netVisual_chord_cell` for visualizing individual signaling pathway
+```
+
+### (C) Wordcloud plot
+Visualize the enriched ligands, signaling,or ligand-receptor pairs in one condition compared to another condition using wordcloud
+```{r}
+### down
+file_name <- paste0(data.dir, "net_down_enriched_ligands_Ecoli_compared_to_Saline.pdf")
+pdf(file_name, width = 4, height = 4) 
+computeEnrichmentScore(net.down, species = 'human', variable.both = TRUE)
+dev.off()
+
+### up
+file_name <- paste0(data.dir, "net_up_enriched_ligands_Ecoli_compared_to_Saline.pdf")
+pdf(file_name, width = 4, height = 4) 
+computeEnrichmentScore(net.up, species = 'human', variable.both = TRUE)
+dev.off()
+```
+
+# Part IV: Visually compare cell-cell communication using Hierarchy plot, Circle plot or Chord diagram
+### Circle plot of pathway of interest
+```{r}
+pathways.show <- c("VCAM") 
+
+file_name <- paste0(data.dir, pathways.show, "_circle.pdf")
+pdf(file_name, width = 10, height = 4) 
+weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) # control the edge weights across different datasets
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "circle", edge.weight.max = weight.max[1], edge.width.max = 10, signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+dev.off()
+```
+### Heatmap of pathway of interest
+```{r}
+file_name <- paste0(data.dir, pathways.show, "_heatmap.pdf")
+pdf(file_name, width = 7, height = 3.5) 
+
+par(mfrow = c(1,2), xpd=TRUE)
+ht <- list()
+for (i in 1:length(object.list)) {
+  ht[[i]] <- netVisual_heatmap(object.list[[i]], signaling = pathways.show, color.heatmap = "Reds",title.name = paste(pathways.show, "signaling ",names(object.list)[i]))
+}
+ComplexHeatmap::draw(ht[[1]] + ht[[2]], ht_gap = unit(0.5, "cm"))
+dev.off()
+```
+### Chord of pathway of interest 
+```{r}
+file_name <- paste0(data.dir, pathways.show, "_chord.pdf")
+pdf(file_name, width = 10, height = 7) 
+
+### Chord diagram
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_aggregate(object.list[[i]], signaling = pathways.show, layout = "chord", signaling.name = paste(pathways.show, names(object.list)[i]))
+}
+
+dev.off()
+```
+## Chord plot of signaling between one cell type compared to the other cell types 
+```{r}
+par(mfrow = c(1, 2), xpd=TRUE)
+# compare all the interactions sending from one cell type to the other cell types 
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = 2, targets.use = c(1:8), lab.cex = 0.5, title.name = paste0("Signaling from", names(object.list)[i]))
+}
+```
+### Gene expression 
+```{r}
+# factor the datasets
+cellchat@meta$datasets = factor(cellchat@meta$datasets, levels = c("Saline", "Ecoli")) # set factor level
+```
+
+```{r}
+# violin 
+plotGeneExpression(cellchat, signaling = "APP", split.by = "datasets", colors.ggplot = T, type = "violin", color.use = c("black", "green3"))
+```
+
+# Save
+```{r}
+save(object.list, file = "../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+save(cellchat, file = "../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+```

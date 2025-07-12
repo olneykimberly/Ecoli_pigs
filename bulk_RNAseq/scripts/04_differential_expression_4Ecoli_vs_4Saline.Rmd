@@ -24,15 +24,15 @@ This is the raw counts
 # path to counts files
 count_files <-
   file.path(paste0(
-    brain_metadata$path,
-    brain_metadata$counts_name,
+    metadata$path,
+    metadata$counts_name,
     "_",
     typeOfCount
   ))
 # add sample counts name to the counts files
-names(count_files) <- paste0(brain_metadata$counts_name)
+names(count_files) <- paste0(metadata$counts_name)
 # Inspect 
-table(brain_metadata$sample) # Some samples have technical replicates. 
+table(metadata$sample) # Some samples have technical replicates. 
 
 # Create the counts matrix 
 count_data <- data.frame(fread(count_files[1]))[c(1,4)] # forth column for RF reads 
@@ -69,6 +69,9 @@ row.names(count_data) <- count_data$V1
 count_data$V1 <- NULL
 # set column names to sample counts file name
 colnames(count_data) <- brain_metadata$counts_name
+
+genes <- read.delim("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/rObjects/v7_ensembl_protein_coding_genes_v2.txt"
+)
 ```
 
 # Check inputs
@@ -504,7 +507,7 @@ rm(design, fit, coef.fit, contrasts, vfit)
 # DEGs summary
 ```{r DGE_summary}
 qval <- 0.05
-lfc.cutoff <- 0.25
+lfc.cutoff <- 1
 
 sumTable <- 
   summary(decideTests(
@@ -516,7 +519,7 @@ sumTable <-
 
 print(paste0(" q < ", qval, " & absolute log2-fold change > ", lfc.cutoff))
 sumTable
-write.table(sumTable, paste0("../results/DEGs/DEGs_summary_q0.05_log2FC0.25.txt"), quote = FALSE, sep = "\t")
+write.table(sumTable, paste0("../results/DEGs/DEGs_summary_q0.05_log2FC1.txt"), quote = FALSE, sep = "\t")
 genes_relevant <- dge.filtered.norm$genes
 
 rm(sumTable)
@@ -556,7 +559,7 @@ for (i in allComparisons) {
   path <- paste0("../results/DEGs/", i, "_q1.00.txt", sep = "") 
   write.table(vTopTableAll, path, sep = "\t", row.names = FALSE, quote = FALSE)
   
-  # p < 0.05, log2fc > 0.25
+  # p < 0.05, log2fc > 1
   vTopTableSig <-
     topTable( 
       veBayesFit,  
@@ -566,7 +569,7 @@ for (i in allComparisons) {
       lfc = lfc.cutoff,
       genelist = genes_relevant, 
       confint = TRUE)
-  path <- paste0("../results/DEGs/", i, "_q0.05_lfc0.25.txt", sep = "") 
+  path <- paste0("../results/DEGs/", i, "_q0.05_lfc1.txt", sep = "") 
   write.table(vTopTableSig, path, sep = "\t", row.names = FALSE, quote = FALSE)
   # increment 
   coef <- coef + 1
@@ -658,10 +661,10 @@ for (i in allComparisons) {
   max <- nrow(group1_vs_group2)
   for (row in 1:max) {
     if (group1_vs_group2$adj.P.Val[row] < 0.05) {
-      if (group1_vs_group2$logFC [row] > 0.25) {
+      if (group1_vs_group2$logFC [row] > 1) {
         color_values <- c(color_values, 1)
       }
-      else if (group1_vs_group2$logFC[row] < -.25) {
+      else if (group1_vs_group2$logFC[row] < -1) {
         color_values <- c(color_values, 2)
       }
       else {
@@ -675,7 +678,7 @@ for (i in allComparisons) {
   group1_vs_group2$color_adjpval_0.05 <- factor(color_values)
   data <- group1_vs_group2
   # plot only if there are DEGs with p_val_adj < 0.05
-  num <- subset(data, (adj.P.Val < 0.05 & logFC < -.25)  | (adj.P.Val < 0.05 & logFC > .25 ))
+  num <- subset(data, (adj.P.Val < 0.05 & logFC < -1)  | (adj.P.Val < 0.05 & logFC > 1 ))
   num <- nrow(num)
   if (num != 0) {
     up <- data[data$color_adjpval_0.05 == 1,]
@@ -698,8 +701,8 @@ for (i in allComparisons) {
     }
     hadjpval <- (-log10(max(data$P.Value[data$adj.P.Val < 0.05],
                             na.rm = TRUE)))
-    negFC <- c(-.25)
-    posFC <- c(.25) 
+    negFC <- c(-1)
+    posFC <- c(1) 
     p <-
       ggplot(data = data,
              aes(
@@ -728,7 +731,7 @@ for (i in allComparisons) {
                  #  horizontal line
                  colour = "#000000",
                  linetype = "dashed") +
-      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 0.25")) +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
       geom_text_repel(
         data = up10,
         aes(
@@ -811,6 +814,11 @@ allComparisons
 list_of_datasets <- list(
   "Ecoli_vs_Saline" = Ecoli_vs_Saline)
 write.xlsx(list_of_datasets, file = "../results/DEGs/DEGs.q1.00.xlsx")
+
+library("readxl")
+DEGs <- read_excel("../results/DEGs/DEGs.q1.00.xlsx")
+SIG_DEGs <- subset(DEGs, (adj.P.Val < 0.05 & logFC > 1) | (adj.P.Val < 0.05 & logFC < -1))
+write.table(SIG_DEGs, file = "../results/DEGs/Ecoli_vs_Saline_q0.05_lfc1.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 ```{r}

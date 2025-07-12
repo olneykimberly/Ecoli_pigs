@@ -1,0 +1,452 @@
+---
+title: "CellChat"
+author: "Kimberly Olney, PhD"
+date: "July 8th 2025"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+```
+
+# Libraris, paths, colors
+```{r echo=FALSE, message=FALSE}
+source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
+color.panel <- dittoColors()
+library(NatParksPalettes)
+library("readxl")
+library(patchwork)
+library(ComplexHeatmap)
+library(BiocNeighbors)
+library(CellChat)
+library(NMF)
+library(ggalluvial)
+#BiocManager::install("BiocNeighbors")
+#devtools::install_github("jinworks/CellChat")
+
+
+my_seurat_theme <- function() {
+  theme_classic() + # Start with a base theme
+    theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8), 
+    theme(legend.position = "none")
+    )
+}
+```
+
+# Read in object
+```{r read_object}
+# read object
+dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+
+# inspect
+dataObject
+Layers(dataObject)
+# List of cell types to analyze
+cell_types <- c(unique(dataObject$individual_clusters))
+
+
+group_renaming_map <- c(
+  "Ecoli" = "Saline",
+  "Saline" = "Ecoli"
+)
+
+# 3. Apply the renaming to your specified metadata column
+# Make sure to replace 'your_group_column_name' with the actual column name.
+dataObject$group <- plyr::mapvalues(
+  x = dataObject$group,
+  from = names(group_renaming_map),
+  to = unname(group_renaming_map)
+)
+
+# 4. Verify the changes
+unique(dataObject$group)
+```
+# CellChat - CellChat analysis of a single dataset
+https://htmlpreview.github.io/?https://github.com/jinworks/CellChat/blob/master/tutorial/CellChat-vignette.html
+# Part I - Data input & processing and initialization of CellChat object
+## create object
+Inference, analysis and visualization of cell-cell communication network for a single dataset using CellChat.
+
+Normalized data (e.g., library-size normalization and then log-transformed with a pseudocount of 1) is required as input for CellChat analysis. If user provides count data, we provide a normalizeData function to account for library size and then do log-transformed.
+```{r cellChat}
+## 1. create counts table 
+data.input <- dataObject[["SCT"]]$data # normalized data matrix
+# For Seurat version >= “5.0.0”, get the normalized data via `seurat_object[["RNA"]]$data`
+labels <- Idents(dataObject)
+meta <- data.frame(labels = labels, row.names = names(labels)) # create a dataframe of the cell labels
+meta$samples <- sub("_.*", "", rownames(meta)) # add sample names 
+
+## 2. create a CellChat Object
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+## 3. set the ligand-receptor interaction
+CellChatDB <- CellChatDB.human # use CellChatDB.mouse if running on mouse data
+showDatabaseCategory(CellChatDB)
+
+# use a subset of CellChatDB for cell-cell communication analysis
+# use Secreted Signaling
+#CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling", key = "annotation") 
+
+# use all CellChatDB except for "Non-protein Signaling" for cell-cell communication analysis
+CellChatDB.use <- subsetDB(CellChatDB)
+
+# use all CellChatDB for cell-cell communication analysis
+# Authors do not suggest to use it in this way because CellChatDB v2 includes "Non-protein Signaling" (i.e., metabolic and synaptic signaling). 
+# CellChatDB.use <- CellChatDB 
+
+# set the used database in the object
+cellchat@DB <- CellChatDB.use
+```
+
+## Preprocessing the expression data for cell-cell communication analysis
+To infer the cell state-specific communications, CellChat identifies over-expressed ligands or receptors in one cell group and then identifies over-expressed ligand-receptor interactions if either ligand or receptor are over-expressed.
+
+Also provides a function to project gene expression data onto protein-protein interaction (PPI) network.
+```{r preprocessing}
+# subset the expression data of signaling genes for saving computation cost
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+future::plan("multisession", workers = 4) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+#> The number of highly variable ligand-receptor pairs used for signaling inference is 1573
+```
+
+# Part II - Inference of cell-cell communication network
+## Compute the communication probability and infer cellular communication network
+```{r infer_network}
+ptm = Sys.time()
+options(future.globals.maxSize = 2000 * 1024^2) 
+cellchat <- computeCommunProb(cellchat, type = "triMean")
+```
+
+## Infer the cell-cell communication at a signaling pathway level
+```{r}
+cellchat <- computeCommunProbPathway(cellchat)
+
+## Get the network
+# to access the the inferred communications at the level of signaling pathways
+df.net <- subsetCommunication(cellchat, slot.name = "netP") 
+unique(df.net$pathway_name) # see networks
+```
+
+## Calculate the aggregated cell-cell communication network
+```{r}
+cellchat <- aggregateNet(cellchat)
+execution.time = Sys.time() - ptm
+print(as.numeric(execution.time, units = "secs"))
+
+ptm = Sys.time()
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+
+path <- paste0("../results/CellChat/aggregated_cellcell_communication_network_circle")
+saveToPDF(paste0(path, ".pdf"), width = 8, height = 4.5)
+```
+
+## Signaling from each cell group
+```{r celltype_signaling}
+mat <- cellchat@net$weight
+par(mfrow = c(3,4), xpd=TRUE)
+for (i in 1:nrow(mat)) {
+  mat2 <- matrix(0, nrow = nrow(mat), ncol = ncol(mat), dimnames = dimnames(mat))
+  mat2[i, ] <- mat[i, ]
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
+}
+
+path <- paste0("../results/CellChat/celltype_cellcell_communication_network")
+saveToPDF(paste0(path, ".pdf"), width = 14, height = 8)
+```
+# Part III - Visualization of cell-cell communication network
+## Visualize each signaling pathway using Hierarchy plot, Circle plot or Chord diagram.
+```{r}
+pathways.show <- c("OCLN") #, "JAM", "OCLN", "CDH5", "PECAM1", "LAMININ", "HSPG")
+# Hierarchy plot
+# define `vertex.receive` so that the left portion of the hierarchy plot shows signaling to X and the right portion shows signaling to Y cells 
+# Order from levels(cellchat@idents) is:
+levels(cellchat@idents)
+
+#Focus on Vascular Components (Endothelial, Mural, VLMC):
+vertex.receiver = c(4, 8, 7)  # a numeric vector. (X, Y)
+netVisual_aggregate(cellchat, signaling = pathways.show)
+
+# Circle plot
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "circle")
+
+# Chord diagram
+par(mfrow=c(1,1))
+netVisual_aggregate(cellchat, signaling = pathways.show, layout = "chord")
+
+# Heatmap
+par(mfrow=c(1,1))
+netVisual_heatmap(cellchat, signaling = pathways.show, color.heatmap = "Reds")
+```
+
+## Compute the contribution of each ligand-receptor pair
+Compute the contribution of each ligand-receptor pair to the overall signaling pathway and visualize cell-cell communication mediated by a single ligand-receptor pair
+```{r}
+netAnalysis_contribution(cellchat, signaling = pathways.show)
+
+# visualize the cell-cell communication mediated by a single ligand-receptor pair
+
+pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show, geneLR.return = FALSE)
+LR.show <- pairLR[1,] # show one ligand-receptor pair
+# Hierarchy plot
+netVisual_individual(cellchat, signaling = pathways.show,  pairLR.use = LR.show, vertex.receiver = vertex.receiver)
+
+# Circle plot
+netVisual_individual(cellchat, signaling = pathways.show, pairLR.use = LR.show, layout = "circle")
+
+# Chord diagram
+netVisual_individual(cellchat, signaling = pathways.show, pairLR.use = LR.show, layout = "chord")
+```
+
+## For loop plots
+```{r}
+# Access all the signaling pathways showing significant communications
+pathways.show.all <- cellchat@netP$pathways
+# check the order of cell identity to set suitable vertex.receiver
+levels(cellchat@idents)
+for (i in 1:length(pathways.show.all)) {
+  # Visualize communication network associated with both signaling pathway and individual L-R pairs
+  netVisual(cellchat, signaling = pathways.show.all[i],  vertex.receiver = vertex.receiver, layout = "hierarchy")
+  # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
+  gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
+  ggsave(filename=paste0("../results/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 6, height = 5, units = 'in', dpi = 300)
+}
+```
+
+
+## Visualize cell-cell communication mediated by multiple ligand-receptors or signaling pathways
+CellChat can also show all the significant interactions mediated by L-R pairs and signaling pathways, and interactions provided by users from some cell groups to other cell groups using the function netVisual_bubble (option A) and netVisual_chord_gene (option B).
+
+### (A) Bubble plot
+```{r}
+# (A) Bubble plot
+# show all the significant interactions (L-R pairs) from some cell groups to other cell groups using netVisual_bubble.
+
+# Get the levels of cell identities from your CellChat object
+cell_types <- levels(cellchat@idents)
+
+# Define the base path for saving the plots
+base_path <- "../results/CellChat/"
+
+for (i in seq_along(cell_types)) {
+  current_source_index <- i
+  current_source_name <- cell_types[i]
+  # Determine the target cell types (all other cell types)
+  # This creates a vector of indices from 1 to the total number of cell types,
+  # and then removes the index of the current source cell type.
+  targets_indices <- setdiff(seq_along(cell_types), current_source_index)
+  # Generate the plot title
+  plot_title <- paste0("Communication from ", current_source_name, " to all other cell types")
+  # Generate the bubble plot
+  # We'll assign the plot to a variable to explicitly control its saving
+  bubble_plot <- netVisual_bubble(cellchat, 
+                                  sources.use = current_source_index, 
+                                  targets.use = targets_indices, 
+                                  remove.isolate = FALSE,
+                                  title.name = plot_title) # Add a title for clarity
+
+  # Define the filename for the current plot
+  file_name <- paste0(base_path, "communication_from_", gsub(" ", "_", tolower(current_source_name)), "_to_all_other_celltypes.pdf")
+
+  # Save the plot as a PDF
+  # The print() function is crucial when saving plots generated by ggplot2-based functions
+  # within a loop to ensure they are drawn to the device before saving.
+  pdf(file_name, width = 6, height = 11)
+  print(bubble_plot)
+  dev.off()
+}
+```
+
+### (B) Chord diagram 
+Similar to Bubble plot, CellChat provides a function netVisual_chord_gene for drawing Chord diagram to show all the interactions (L-R pairs or signaling pathways) from some cell groups to other cell groups. 
+
+Two special cases: one is showing all the interactions sending from one cell groups and the other is showing all the interactions received by one cell group. show the interactions inputted by USERS or certain signaling pathways defined by USERS
+```{r}
+# Define the base path for saving the Chord diagrams
+base_path <- "../results/CellChat/"
+
+# Loop through each cell type to set it as 'sources.use'
+for (i in seq_along(cell_types)) {
+  current_source_index <- i
+  current_source_name <- cell_types[i]
+
+  # Determine the target cell types (all other cell types)
+  targets_indices <- setdiff(seq_along(cell_types), current_source_index)
+
+  # Generate the plot title
+  plot_title <- paste0("Chord Diagram: Interactions from ", current_source_name, " to all other cell types")
+  
+  # Define the filename for the current plot
+  file_name <- paste0(base_path, "chord_from_", gsub(" ", "_", tolower(current_source_name)), "_to_all_other_celltypes.pdf")
+
+  # Open the PDF device
+  pdf(file_name, width = 14, height = 10) 
+  
+  # Generate the Chord diagram
+  # netVisual_chord_gene doesn't return a ggplot2 object that needs 'print()'
+  # It draws directly to the active graphics device.
+  netVisual_chord_gene(cellchat, 
+                       sources.use = current_source_index, 
+                       targets.use = targets_indices, 
+                       lab.cex = 0.5, 
+                       legend.pos.y = 30, # Adjust legend position if needed
+                       title.name = plot_title) # Add a title for clarity
+
+  dev.off()
+}
+```
+
+### (C) Violin gene expression distribution 
+By default, plotGeneExpression only shows the expression of signaling genes related to the inferred significant communications. USERS can show the expression of all signaling genes related to one signaling pathway by enriched.only = FALSE,
+```{r}
+# Get the list of unique signaling pathways
+pathway_names <- unique(df.net$pathway_name)
+base_path <- "../results/CellChat/"
+for (pathway in pathway_names) {
+  clean_pathway_name <- gsub("[^A-Za-z0-9_]", "_", pathway)
+  file_name <- paste0(base_path, "violin_plot_gene_expression_", (clean_pathway_name), ".pdf")
+  plot_title <- paste0("Gene Expression for Pathway: ", pathway)
+  pdf(file_name, width = 10, height = 7) 
+  tryCatch({
+    violin_plot <- plotGeneExpression(cellchat, 
+                                      signaling = pathway, 
+                                      enriched.only = TRUE, 
+                                      type = "violin")
+    if (!is.null(violin_plot)) {
+      print(violin_plot + ggtitle(plot_title))
+    } else {
+      message(paste("Warning: plotGeneExpression returned NULL for pathway:", pathway))
+    }
+  }, error = function(e) {
+    message(paste("Error generating plot for pathway:", pathway, "\nError:", e$message))
+  })
+  dev.off()
+  message(paste("Saved violin plot for pathway:", pathway, "to", file_name))
+}
+```
+
+# Part IV: Systems analysis of cell-cell communication network
+Identify signaling roles (e.g., dominant senders, receivers) of cell groups as well as the major contributing signaling
+```{r}
+# Compute the network centrality scores
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP") # the slot 'netP' means the inferred intercellular communication network of signaling pathways
+```
+
+### (A) Compute and visualize the network centrality scores
+```{r}
+# Visualize the computed centrality scores using heatmap, allowing ready identification of major signaling roles of cell groups
+for (pathway in pathway_names) {
+  clean_pathway_name <- gsub("[^A-Za-z0-9_]", "_", pathway)
+  file_name <- paste0(base_path, "signaling_pathway_network_", (clean_pathway_name), ".pdf")
+  pdf(file_name, width = 5, height = 4) 
+  tryCatch({
+    netAnalysis_signalingRole_network(cellchat, signaling = pathway, width = 8, height = 2.5, font.size = 10)
+  })
+  dev.off()
+}
+```
+
+### (B) Visualize dominant senders (sources) and receivers (targets) in a 2D space
+```{r}
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+gg1 <- netAnalysis_signalingRole_scatter(cellchat)
+
+file_name <- ("../results/CellChat/aggregated_cellcell_communication_network_2D.pdf")
+pdf(file_name, width = 5, height = 3.5) 
+gg1
+dev.off()
+#> Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+# Signaling role analysis on the cell-cell communication networks of interest
+gg2 <- netAnalysis_signalingRole_scatter(cellchat, signaling = c("COLLAGEN", "LAMININ", "FN1", "TGFb", "PDGF", "HSPG")) +ggtitle("Extracellular Matrix and Vessel Stability")
+#> Signaling role analysis on the cell-cell communication network from user's input
+#gg1 + gg2
+gg2
+```
+
+### (C) Identify signals contributing the most to outgoing or incoming signaling of certain cell groups
+```{r}
+# Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
+ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing")
+ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming")
+ht1 + ht2
+
+file_name <- ("../results/CellChat/aggregated_cellcell_communication_network_heatmap.pdf")
+pdf(file_name, width = 12, height = 10) 
+ht1 + ht2
+dev.off()
+```
+
+# Global communication patterns 
+Identify global communication patterns to explore how multiple cell types and signaling pathways coordinate together
+### (A)  Identify and visualize outgoing and incoming communication pattern of  cells
+```{r}
+## outgoing 
+file_name <- ("../results/CellChat/global_outgoing_Cophenetic_and_Silhouette_values.pdf")
+pdf(file_name, width = 8, height = 5) 
+selectK(cellchat, pattern = "outgoing")
+dev.off()
+
+nPatterns = 4
+file_name <- ("../results/CellChat/global_outgoing_communication_pattern_heatmap.pdf")
+pdf(file_name, width = 11, height = 12.5) 
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns,  width = 10, height = 12, font.size = 8)
+dev.off()
+
+file_name <- ("../results/CellChat/global_outgoing_communication_pattern_river.pdf")
+pdf(file_name, width = 9, height = 10) 
+netAnalysis_river(cellchat, pattern = "outgoing")
+dev.off()
+
+file_name <- ("../results/CellChat/global_outgoing_communication_pattern_dotplot.pdf")
+pdf(file_name, width = 10, height = 5) 
+netAnalysis_dot(cellchat, pattern = "outgoing")
+dev.off()
+
+## incoming 
+file_name <- ("../results/CellChat/global_incoming_Cophenetic_and_Silhouette_values.pdf")
+pdf(file_name, width = 8, height = 5) 
+selectK(cellchat, pattern = "incoming")
+dev.off()
+
+nPatterns = 5
+file_name <- ("../results/CellChat/global_incoming_communication_pattern_heatmap.pdf")
+pdf(file_name, width = 11, height = 12.5) 
+cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns,  width = 10, height = 12, font.size = 8)
+dev.off()
+
+file_name <- ("../results/CellChat/global_incoming_communication_pattern_river.pdf")
+pdf(file_name, width = 9, height = 10) 
+netAnalysis_river(cellchat, pattern = "incoming")
+dev.off()
+
+file_name <- ("../results/CellChat/global_incoming_communication_pattern_dotplot.pdf")
+pdf(file_name, width = 10, height = 5) 
+netAnalysis_dot(cellchat, pattern = "incoming")
+dev.off()
+```
+
+## Save 
+```{r save}
+saveRDS(cellchat, file = "../rObjects/cellchat_snRNA_EcoliPigs.rds")
+cellchat <- readRDS("../rObjects/cellchat_snRNA_EcoliPigs.rds")
+```
