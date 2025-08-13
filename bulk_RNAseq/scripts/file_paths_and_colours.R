@@ -81,8 +81,8 @@ saveToPDF <- function(...) {
 metadata <- read.delim("/tgen_labs/jfryer/kolney/Ecoli_pigs/all_pigs_combined_metadata.tsv", header = TRUE, sep = "\t")
 # Update path to star counts
 metadata$path <- gsub("/research/labs/neurology/fryer/m239830/Ecoli_pigs/bulk_RNAseq/starAligned/", 
-                   "/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/starAligned/", 
-                   metadata$path)
+                      "/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/starAligned/", 
+                      metadata$path)
 # Remove pigs 9 & 13 from the LPS project, they died quickly and we're excluded 
 metadata <- metadata[metadata$group != "LPS",]
 metadata <- metadata[metadata$group != "Control",] # The saline samples from the LPS study
