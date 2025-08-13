@@ -5,3 +5,6 @@ Rproj.user
 bulk_RNAseq/scripts/.snakemake
 bulk_RNAseq/scripts/.snakemake/*
 .Rproj.user
+snRNAseq/scripts/.snakemake
+snRNAseq/scripts/.snakemake/*
+snRNAseq/scripts/old_scripts/*
