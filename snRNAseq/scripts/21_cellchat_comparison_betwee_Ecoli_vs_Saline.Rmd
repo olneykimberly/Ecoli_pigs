@@ -517,11 +517,16 @@ dev.off()
 ```
 ## Chord plot of signaling between one cell type compared to the other cell types 
 ```{r}
+file_name <- paste0(data.dir,"signaling_between_cells_chord.pdf")
+pdf(file_name, width = 10, height = 10) 
+
 par(mfrow = c(1, 2), xpd=TRUE)
 # compare all the interactions sending from one cell type to the other cell types 
 for (i in 1:length(object.list)) {
-  netVisual_chord_gene(object.list[[i]], sources.use = 2, targets.use = c(1:8), lab.cex = 0.5, title.name = paste0("Signaling from", names(object.list)[i]))
+  netVisual_chord_gene(object.list[[i]], sources.use = 2, targets.use = c(1:8), lab.cex = 0.5, title.name = paste0("Signaling from ", names(object.list)[i]))
 }
+
+dev.off()
 ```
 ### Gene expression 
 ```{r}
@@ -538,4 +543,8 @@ plotGeneExpression(cellchat, signaling = "APP", split.by = "datasets", colors.gg
 ```{r}
 save(object.list, file = "../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
 save(cellchat, file = "../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+
+load("../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+load("../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+
 ```
