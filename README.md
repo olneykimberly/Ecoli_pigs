@@ -24,12 +24,12 @@ conda env create -n cellbender_py38 --file cellbender_py38.yml # for single nucl
 
 ```
 ## Bulk RNAseq differential expression
-We have put together a workflow for inferring differential expression between saline (control) and LPS female pigs using two read aligners STAR and Kallisto. These tools are publicly available and we ask that if you use this workflow to cite the tools used listed in the table below. 
+We have put together a workflow for inferring differential expression between E. coli and saline (control) female pigs using read aligner STAR. The tools used in this workflow are publicly available and we ask that if you use this workflow to cite the tools used. 
 
 ### 1. Download fastq files and pig reference genome. Create a reference index. 
-The raw fastq files may be obtained from SRA PRJNA723823. Samples were sequenced to ~50 million (M) 2 × 100 bp paired-end reads across two lanes. Information on how to download from SRA may be found [here](https://www.ncbi.nlm.nih.gov/sra/docs/sradownload/). 
+The raw fastq files may be obtained from SRA PRJNA1172687 - bulk; PRJNA1175698 - snRNAseq. Bulk RNAseq samples were sequenced to ~50 million (M) 2 × 100 bp paired-end reads across two lanes. Single nucleus RNAseq aimed to capture 15,000 nuclei per sample. Information on how to download from SRA may be found [here](https://www.ncbi.nlm.nih.gov/sra/docs/sradownload/). 
 
-Download the Sus scrofa (pig) reference genome, transcriptome, and gene annotation from Ensembl. The version used in this workflow is v7. 
+Download the Sus scrofa (pig) reference genome and gene annotation from Ensembl. The version used in this workflow is v7. 
 ```
 cd reference
 wget http://ftp.ensembl.org/pub/release-107/fasta/sus_scrofa/dna/Sus_scrofa.Sscrofa11.1.dna.toplevel.fa.gz
@@ -46,45 +46,36 @@ python hardmaskY.py
 STAR --runThreadN 12 --runMode genomeGenerate --genomeDir Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask --genomeFastaFiles Sus_scrofa.Sscrofa11.1.dna.toplevel.Ymask.fa --sjdbGTFfile Sus_scrofa.Sscrofa11.1.107.gtf
 ```
 
-Build the reference transcriptome index:
-
-```
-pyhon hardmaskY_transcriptome.py
-
-kallisto index -i Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.kallisto.fa Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.fa
-```
-
 ### 2. Align reads and generate quantification estimates.
 First move to the scripts snakemake folder.
 ```
 cd bulkRNA/scripts/snakemake/
 ```
 Now run the snakefile. To run multiple samples in parallel use -j and the number of jobs to run.
+You may need to adjust pathways within the config.json file to be to the location of the files on your system. 
 ```
 snakemake -s Snakefile
 ```
 
 ### 3. preform differntial expression
-First, you will need to create sub-directories within the star and kallisto folders found in the results directory. This is where the results from running differential expression will be placed. 
+First, you will need to create sub-directories within the results folders. This is where the results from running differential expression will be placed. 
 ```
-cd results/star/
+cd results/
 mkidr CPM  DEGs  JSD  MDS  boxplot  density  gprofiler  metascape  volcano  voom
-cd ../kallisto/
-mkdir CPM  DEGs  JSD  MDS  boxplot  density  gprofiler  metascape  volcano  voom TPM
-```
-Move to the scripts R folder.
-```
-cd ../../scripts/R/
-R gene_DE.R # gene-level differential expression 
-R pseudoalign_isoform_DE.Rmd # isoform-level differential expression 
-R LPS_mouse_processing.Rmd # processing of the mouse Kang et al. 2017 data
 ```
 
-Additional R scripts are for comparing between tissues within the pig data, and between mouse and pig brain. Scripts for making the manuscript figures are located in the folder called manuscript_figures.
+Move to the scripts R folder.
+```
+cd ../scripts/R/
+R 04a_stats.R # Statistical analysis of clinical and pathological measurements
+R 04_differential_expression.Rmd # gene-level differential expression 
+```
+
+Scripts for making the manuscript figures are located in the folder called manuscript_figures.
 
 ## Contacts
 
 | Contact | Email |
 | --- | --- |
-| Kimberly Olney, PhD | olney.kimberly@mayo.edu |
-| John Fryer, PhD | fryer.john@mayo.edu |
+| Kimberly Olney, PhD | kolney@tgen.org |
+| John Fryer, PhD | jfryer@tgen.org |
