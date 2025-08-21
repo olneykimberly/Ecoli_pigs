@@ -1,0 +1,1605 @@
+---
+title: "Manuscript Figures"
+author: "Kimberly Olney, PhD"
+date: "May 2025"
+output:
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: inline
+---
+
+# PNAS figure requirements
+https://www.pnas.org/author-center/submitting-your-manuscript#manuscript-formatting-guidelines
+Small: approximately 9 cm x 6 cm
+Medium: approximately 11 cm x 11 cm
+Large: approximately 18 cm x 22 cm
+
+Small: approximately 3.54 inches x 2.36 inches
+Medium: approximately 4.33 inches x 4.33 inches
+Large: approximately 7.09 inches x 8.66 inches
+
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+```
+
+# Libraris, paths, colors
+```{r echo=FALSE, message=FALSE}
+source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
+color.panel <- dittoColors()
+library(NatParksPalettes)
+library("readxl")
+library(patchwork) 
+library(ggpubr)
+library(gridExtra)
+library(patchwork)
+library(ggplotify)
+library(magick)
+
+
+my_seurat_theme <- function() {
+  theme_classic() + # Start with a base theme
+    theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8), 
+    theme(legend.position = "none")
+    )
+}
+```
+
+# Read in object
+```{r read_object}
+# read object
+dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+
+# inspect
+dataObject
+Layers(dataObject)
+# List of cell types to analyze
+cell_types <- c(unique(dataObject$individual_clusters))
+
+
+group_renaming_map <- c(
+  "Ecoli" = "Saline",
+  "Saline" = "Ecoli"
+)
+
+# 3. Apply the renaming to your specified metadata column
+# Make sure to replace 'your_group_column_name' with the actual column name.
+dataObject$group <- plyr::mapvalues(
+  x = dataObject$group,
+  from = names(group_renaming_map),
+  to = unname(group_renaming_map)
+)
+
+# 4. Verify the changes
+unique(dataObject$group)
+```
+# Supplemental Figure 3 - other cell types volcaneos, and metascape  
+## a)
+### astrocyte
+```{r astrocyte_volcano}
+# a) astrocytes volcano
+allComparisons <- c("astrocyte")
+for (i in allComparisons) {
+  group1_vs_group2 <-
+    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    i <- gsub("_", " ", i)
+  color_values <- vector()
+    group1_vs_group2 <- na.omit(group1_vs_group2)
+
+  max <- nrow(group1_vs_group2)
+  for (row in 1:max) {
+    if (group1_vs_group2$padj[row] < 0.05) {
+      if (group1_vs_group2$log2FoldChange [row] > 1) {
+        color_values <- c(color_values, 1)
+      }
+      else if (group1_vs_group2$log2FoldChange[row] < -1) {
+        color_values <- c(color_values, 2)
+      }
+      else {
+        color_values <- c(color_values, 3)
+      }
+    }
+    else{
+      color_values <- c(color_values, 3)
+    }
+  }
+  group1_vs_group2$color_adjpval_0.05 <- factor(color_values)
+  data <- group1_vs_group2
+  num <- subset(data, (padj < 0.05 & log2FoldChange < -1)  | (padj < 0.05 & log2FoldChange > 1 ))
+  # Identify up- and down-regulated genes
+  up_num <- sum(data$log2FoldChange > 1 & data$padj < 0.05)
+  down_num <- sum(data$log2FoldChange < -1 & data$padj < 0.05)
+  num <- nrow(num)
+  if (num != 0) {
+    up <- data[data$color_adjpval_0.05 == 1,]
+    up10 <- up[1:10,]
+    upFold <- subset(up, log2FoldChange > 7)
+    upFold <- upFold[!(upFold$gene %in% up10$gene),]
+    down <- data[data$color_adjpval_0.05 == 2,]
+    down10 <- down[1:10,]
+    downFold <- subset(down, log2FoldChange < -5)
+    downFold <- downFold[!(downFold$gene %in% down10$gene),]
+    if (!1 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("blue", "gray")
+    } else if (!2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("red", "gray")
+    } else if (!1 %in% unique(data$color_adjpval_0.05) &&
+               !2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("gray")
+    } else {
+      my_colors <- c("red", "blue", "gray")
+    }
+    hadjpval <- (-log10(max(data$pvalue[data$padj < 0.05],
+                            na.rm = TRUE)))
+    negFC <- c(-1)
+    posFC <- c(1) 
+    astrocyte_vol_plot <-
+      ggplot(data = data,
+             aes(
+               x = log2FoldChange,
+               y = -log10(pvalue),
+               color = color_adjpval_0.05
+             )) +
+      geom_point(alpha = 0.8, size = .8) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      scale_color_manual(values = my_colors) +
+      labs(
+        title = "",
+        x = expression(log[2](FC)),
+        y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
+      )  +
+      geom_hline(yintercept = hadjpval,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = negFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = posFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
+      # geom_text_repel(
+      #   data = up10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 20)
+      # ) +
+      # geom_text_repel(
+      #   data = upFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = down10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = downFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  ) +
+  annotate("text",
+           x = 5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Up\n", up_num),
+           color = "maroon",
+           size = 2.5,
+            fontface = "bold",
+           hjust = 1, vjust = 1) +
+  annotate("text",
+           x = -5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Down\n", down_num),
+           color = "navyblue",
+           fontface = "bold",
+           size = 2.5,
+           hjust = 0, vjust = 1) +
+  scale_x_continuous(limits = c(-6, 10), breaks = seq(-6, 10, 2)) +
+  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) 
+astrocyte_vol_plot 
+    
+  }
+} 
+
+astrocyte_vol_plot
+```
+
+### oligodendrocyte
+```{r oligodendrocyte_volcano}
+# a) oligodendrocytes volcano
+allComparisons <- c("oligodendrocyte")
+for (i in allComparisons) {
+  group1_vs_group2 <-
+    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    i <- gsub("_", " ", i)
+  color_values <- vector()
+    group1_vs_group2 <- na.omit(group1_vs_group2)
+
+  max <- nrow(group1_vs_group2)
+  for (row in 1:max) {
+    if (group1_vs_group2$padj[row] < 0.05) {
+      if (group1_vs_group2$log2FoldChange [row] > 1) {
+        color_values <- c(color_values, 1)
+      }
+      else if (group1_vs_group2$log2FoldChange[row] < -1) {
+        color_values <- c(color_values, 2)
+      }
+      else {
+        color_values <- c(color_values, 3)
+      }
+    }
+    else{
+      color_values <- c(color_values, 3)
+    }
+  }
+  group1_vs_group2$color_adjpval_0.05 <- factor(color_values)
+  data <- group1_vs_group2
+  num <- subset(data, (padj < 0.05 & log2FoldChange < -1)  | (padj < 0.05 & log2FoldChange > 1 ))
+  # Identify up- and down-regulated genes
+  up_num <- sum(data$log2FoldChange > 1 & data$padj < 0.05)
+  down_num <- sum(data$log2FoldChange < -1 & data$padj < 0.05)
+  num <- nrow(num)
+  if (num != 0) {
+    up <- data[data$color_adjpval_0.05 == 1,]
+    up10 <- up[1:10,]
+    upFold <- subset(up, log2FoldChange > 7)
+    upFold <- upFold[!(upFold$gene %in% up10$gene),]
+    down <- data[data$color_adjpval_0.05 == 2,]
+    down10 <- down[1:10,]
+    downFold <- subset(down, log2FoldChange < -5)
+    downFold <- downFold[!(downFold$gene %in% down10$gene),]
+    if (!1 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("blue", "gray")
+    } else if (!2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("red", "gray")
+    } else if (!1 %in% unique(data$color_adjpval_0.05) &&
+               !2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("gray")
+    } else {
+      my_colors <- c("red", "blue", "gray")
+    }
+    hadjpval <- (-log10(max(data$pvalue[data$padj < 0.05],
+                            na.rm = TRUE)))
+    negFC <- c(-1)
+    posFC <- c(1) 
+    oligodendrocyte_vol_plot <-
+      ggplot(data = data,
+             aes(
+               x = log2FoldChange,
+               y = -log10(pvalue),
+               color = color_adjpval_0.05
+             )) +
+      geom_point(alpha = 0.8, size = .8) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      scale_color_manual(values = my_colors) +
+      labs(
+        title = "",
+        x = expression(log[2](FC)),
+        y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
+      )  +
+      geom_hline(yintercept = hadjpval,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = negFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = posFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
+      # geom_text_repel(
+      #   data = up10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 20)
+      # ) +
+      # geom_text_repel(
+      #   data = upFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = down10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = downFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  ) +
+  annotate("text",
+           x = 5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Up\n", up_num),
+           color = "maroon",
+           size = 2.5,
+            fontface = "bold",
+           hjust = 1, vjust = 1) +
+  annotate("text",
+           x = -5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Down\n", down_num),
+           color = "navyblue",
+           fontface = "bold",
+           size = 2.5,
+           hjust = 0, vjust = 1) +
+  scale_x_continuous(limits = c(-6, 10), breaks = seq(-6, 10, 2)) +
+  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) 
+oligodendrocyte_vol_plot 
+    
+  }
+} 
+
+oligodendrocyte_vol_plot
+```
+
+### opc
+```{r opc_volcano}
+# a) opcs volcano
+allComparisons <- c("opc")
+for (i in allComparisons) {
+  group1_vs_group2 <-
+    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    i <- gsub("_", " ", i)
+  color_values <- vector()
+    group1_vs_group2 <- na.omit(group1_vs_group2)
+
+  max <- nrow(group1_vs_group2)
+  for (row in 1:max) {
+    if (group1_vs_group2$padj[row] < 0.05) {
+      if (group1_vs_group2$log2FoldChange [row] > 1) {
+        color_values <- c(color_values, 1)
+      }
+      else if (group1_vs_group2$log2FoldChange[row] < -1) {
+        color_values <- c(color_values, 2)
+      }
+      else {
+        color_values <- c(color_values, 3)
+      }
+    }
+    else{
+      color_values <- c(color_values, 3)
+    }
+  }
+  group1_vs_group2$color_adjpval_0.05 <- factor(color_values)
+  data <- group1_vs_group2
+  num <- subset(data, (padj < 0.05 & log2FoldChange < -1)  | (padj < 0.05 & log2FoldChange > 1 ))
+  # Identify up- and down-regulated genes
+  up_num <- sum(data$log2FoldChange > 1 & data$padj < 0.05)
+  down_num <- sum(data$log2FoldChange < -1 & data$padj < 0.05)
+  num <- nrow(num)
+  if (num != 0) {
+    up <- data[data$color_adjpval_0.05 == 1,]
+    up10 <- up[1:10,]
+    upFold <- subset(up, log2FoldChange > 7)
+    upFold <- upFold[!(upFold$gene %in% up10$gene),]
+    down <- data[data$color_adjpval_0.05 == 2,]
+    down10 <- down[1:10,]
+    downFold <- subset(down, log2FoldChange < -5)
+    downFold <- downFold[!(downFold$gene %in% down10$gene),]
+    if (!1 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("blue", "gray")
+    } else if (!2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("red", "gray")
+    } else if (!1 %in% unique(data$color_adjpval_0.05) &&
+               !2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("gray")
+    } else {
+      my_colors <- c("red", "blue", "gray")
+    }
+    hadjpval <- (-log10(max(data$pvalue[data$padj < 0.05],
+                            na.rm = TRUE)))
+    negFC <- c(-1)
+    posFC <- c(1) 
+    opc_vol_plot <-
+      ggplot(data = data,
+             aes(
+               x = log2FoldChange,
+               y = -log10(pvalue),
+               color = color_adjpval_0.05
+             )) +
+      geom_point(alpha = 0.8, size = .8) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      scale_color_manual(values = my_colors) +
+      labs(
+        title = "",
+        x = expression(log[2](FC)),
+        y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
+      )  +
+      geom_hline(yintercept = hadjpval,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = negFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = posFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
+      # geom_text_repel(
+      #   data = up10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 20)
+      # ) +
+      # geom_text_repel(
+      #   data = upFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = down10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = downFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  ) +
+  annotate("text",
+           x = 5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Up\n", up_num),
+           color = "maroon",
+           size = 2.5,
+            fontface = "bold",
+           hjust = 1, vjust = 1) +
+  annotate("text",
+           x = -5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Down\n", down_num),
+           color = "navyblue",
+           fontface = "bold",
+           size = 2.5,
+           hjust = 0, vjust = 1) +
+  scale_x_continuous(limits = c(-6, 10), breaks = seq(-6, 10, 2)) +
+  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) 
+opc_vol_plot 
+    
+  }
+} 
+
+opc_vol_plot
+```
+
+### VLMC
+```{r VLMC_volcano}
+# a) VLMCs volcano
+allComparisons <- c("VLMC")
+for (i in allComparisons) {
+  group1_vs_group2 <-
+    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    i <- gsub("_", " ", i)
+  color_values <- vector()
+    group1_vs_group2 <- na.omit(group1_vs_group2)
+
+  max <- nrow(group1_vs_group2)
+  for (row in 1:max) {
+    if (group1_vs_group2$padj[row] < 0.05) {
+      if (group1_vs_group2$log2FoldChange [row] > 1) {
+        color_values <- c(color_values, 1)
+      }
+      else if (group1_vs_group2$log2FoldChange[row] < -1) {
+        color_values <- c(color_values, 2)
+      }
+      else {
+        color_values <- c(color_values, 3)
+      }
+    }
+    else{
+      color_values <- c(color_values, 3)
+    }
+  }
+  group1_vs_group2$color_adjpval_0.05 <- factor(color_values)
+  data <- group1_vs_group2
+  num <- subset(data, (padj < 0.05 & log2FoldChange < -1)  | (padj < 0.05 & log2FoldChange > 1 ))
+  # Identify up- and down-regulated genes
+  up_num <- sum(data$log2FoldChange > 1 & data$padj < 0.05)
+  down_num <- sum(data$log2FoldChange < -1 & data$padj < 0.05)
+  num <- nrow(num)
+  if (num != 0) {
+    up <- data[data$color_adjpval_0.05 == 1,]
+    up10 <- up[1:10,]
+    upFold <- subset(up, log2FoldChange > 7)
+    upFold <- upFold[!(upFold$gene %in% up10$gene),]
+    down <- data[data$color_adjpval_0.05 == 2,]
+    down10 <- down[1:10,]
+    downFold <- subset(down, log2FoldChange < -5)
+    downFold <- downFold[!(downFold$gene %in% down10$gene),]
+    if (!1 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("blue", "gray")
+    } else if (!2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("red", "gray")
+    } else if (!1 %in% unique(data$color_adjpval_0.05) &&
+               !2 %in% unique(data$color_adjpval_0.05)) {
+      my_colors <- c("gray")
+    } else {
+      my_colors <- c("red", "blue", "gray")
+    }
+    hadjpval <- (-log10(max(data$pvalue[data$padj < 0.05],
+                            na.rm = TRUE)))
+    negFC <- c(-1)
+    posFC <- c(1) 
+    VLMC_vol_plot <-
+      ggplot(data = data,
+             aes(
+               x = log2FoldChange,
+               y = -log10(pvalue),
+               color = color_adjpval_0.05
+             )) +
+      geom_point(alpha = 0.8, size = .8) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      scale_color_manual(values = my_colors) +
+      labs(
+        title = "",
+        x = expression(log[2](FC)),
+        y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
+      )  +
+      geom_hline(yintercept = hadjpval,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = negFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = posFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
+      # geom_text_repel(
+      #   data = up10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 20)
+      # ) +
+      # geom_text_repel(
+      #   data = upFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "maroon",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = down10,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+      # geom_text_repel(
+      #   data = downFold,
+      #   aes(
+      #     x = log2FoldChange,
+      #     y = -log10(pvalue),
+      #     label = gene
+      #   ),
+      #   color = "navyblue",
+      #   fontface = "italic",
+      #   size = 1.8,
+      #   max.overlaps = getOption("ggrepel.max.overlaps", default = 10)
+      # ) +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  ) +
+  annotate("text",
+           x = 5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Up\n", up_num),
+           color = "maroon",
+           size = 2.5,
+            fontface = "bold",
+           hjust = 1, vjust = 1) +
+  annotate("text",
+           x = -5.5, # Adjust x position as needed
+           y = 20,    # Adjust y position as needed
+           label = paste("Down\n", down_num),
+           color = "navyblue",
+           fontface = "bold",
+           size = 2.5,
+           hjust = 0, vjust = 1) +
+  scale_x_continuous(limits = c(-6, 10), breaks = seq(-6, 10, 2)) +
+  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) 
+VLMC_vol_plot 
+    
+  }
+} 
+
+VLMC_vol_plot
+```
+### nueron
+```{r neuron_volcano}
+# a) neurons volcano
+allComparisons <- c("neuron")
+for (i in allComparisons) {
+  group1_vs_group2 <-
+    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    i <- gsub("_", " ", i)
+  color_values <- vector()
+    group1_vs_group2 <- na.omit(group1_vs_group2)
+    negFC <- c(-1)
+    posFC <- c(1) 
+    neuron_vol_plot <-
+      ggplot(data = data,
+             aes(
+               x = log2FoldChange,
+               y = -log10(pvalue),
+               color = color_adjpval_0.05
+             )) +
+      geom_point(alpha = 0.8, size = .8) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      scale_color_manual(values = "gray") +
+      labs(
+        title = "",
+        x = expression(log[2](FC)),
+        y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
+      )  +
+      geom_vline(xintercept = negFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      geom_vline(xintercept = posFC,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
+      ggtitle(paste0(i, "\nq < 0.05 & |log2FC| > 1")) +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  ) +
+  scale_x_continuous(limits = c(-6, 10), breaks = seq(-6, 10, 2)) +
+  scale_y_continuous(limits = c(0, 20), breaks = seq(0, 20, 5)) 
+    
+}
+neuron_vol_plot 
+```
+
+
+# b) metascape
+### astrocyte
+```{r metascape}
+# Metascape Enrichment 
+#read in enrichment analysis results
+up_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/astrocyte_up/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+down_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/astrocyte_down/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+# select the GO term IDs we want to show in the plot
+GO_ID_up <-
+  c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+  )
+GO_ID_down <- c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+)
+
+up_enrich_results_subset <-
+  up_enrich_results[up_enrich_results$GroupID %in% GO_ID_up, ]
+up_enrich_results_subset$Cluster <- c("upregulated")
+up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description,
+         levels = up_enrich_results_subset$Description)
+up_enrich_results_subset$Description <-
+  fct_rev(up_enrich_results_subset$Description)
+
+down_enrich_results_subset <-
+  down_enrich_results[down_enrich_results$GroupID %in% GO_ID_down, ]
+down_enrich_results_subset$Cluster <- c("downregulated")
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description,
+         levels = down_enrich_results_subset$Description)
+down_enrich_results_subset$Description <-
+  fct_rev(down_enrich_results_subset$Description)
+
+# get the number of genes in each summary
+up_gene_count <-
+  strsplit(as.character(up_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+up_gene_count_df <-
+  data.frame(matrix(
+    unlist(up_gene_count),
+    nrow = length(up_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+up_enrich_results_subset$InTerm <- as.numeric(up_gene_count_df$X1)
+up_enrich_results_subset$InList <- as.numeric(up_gene_count_df$X2)
+
+ up_enrich_results_subset$Description <-
+       gsub(
+         "TRBP containing complex.*",
+         "TRBP containing complex",
+         up_enrich_results_subset$Description
+       )
+
+  up_enrich_results_subset$Description <-
+       gsub(
+         "positive regulation of establishment of protein localization to telomere",
+         "pos reg of protein localization to telomere",
+         up_enrich_results_subset$Description
+       )
+
+  up_enrich_results_subset$Description <-
+       gsub(
+         "Senescence associated secretory phenotype SASP",
+         "Senescence secretory phenotype SASP",
+         up_enrich_results_subset$Description
+       )
+  
+  
+ up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description, levels = unique(up_enrich_results_subset$Description)) 
+
+up_enrich_results_subset$Description <- fct_rev(up_enrich_results_subset$Description)
+
+ 
+down_gene_count <-
+  strsplit(as.character(down_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+down_gene_count_df <-
+  data.frame(matrix(
+    unlist(down_gene_count),
+    nrow = length(down_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+down_enrich_results_subset$InTerm <- as.numeric(down_gene_count_df$X1)
+down_enrich_results_subset$InList <- as.numeric(down_gene_count_df$X2)
+
+down_enrich_results_subset$Description <-
+       gsub(
+         "plasma membrane bounded cell projection assembly",
+         "plasma membrane cell projection",
+         down_enrich_results_subset$Description
+       )
+
+down_enrich_results_subset$Description <-
+       gsub(
+         "positive regulation of chromosome segregation",
+         "pos reg of chromosome segregation",
+         down_enrich_results_subset$Description
+       )
+
+down_enrich_results_subset$Description <-
+       gsub(
+         "positive regulation of chromosome organization",
+         "pos reg of chromosome organization",
+         down_enrich_results_subset$Description
+       )
+
+
+
+down_enrich_results_subset$Description <-
+       gsub(
+         "Mitochondrial Fatty Acid Beta-Oxidation",
+         "Mito Fatty Acid Beta Oxidation",
+         down_enrich_results_subset$Description
+       )
+
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description, levels = unique(down_enrich_results_subset$Description)) 
+
+down_enrich_results_subset$Description <- fct_rev(down_enrich_results_subset$Description)
+
+
+# combine together
+up_and_down_enrich_results_subset <- rbind(up_enrich_results_subset, down_enrich_results_subset)
+
+up_and_down_enrich_results_subset$Description <-
+  factor(up_and_down_enrich_results_subset$Description, levels = unique(up_and_down_enrich_results_subset$Description)) 
+
+up_and_down_enrich_results_subset$Description <- fct_rev(up_and_down_enrich_results_subset$Description)
+
+up_and_down_enrich_plot <-
+  ggplot(data = up_and_down_enrich_results_subset, aes(x = InTerm, y = Description)) +
+  ggplot2::facet_grid(~ Cluster, scales = "free") +
+  geom_bar(stat = "identity", aes(fill = LogP), width = .7, position = position_dodge(width = .2)) +
+  theme_bw() +
+ # ggtitle(paste0(tissue," enrichment summaries")) +
+  labs(x = "Gene count", y = NULL) +
+  guides(fill = guide_legend(title = expression(log[10] ~ "(" ~ italic("p") ~ "-value)"))) +
+  scale_fill_gradientn(
+    colours = c(colors=natparks.pals("Denali")),
+    guide = "legend",
+    limits = c(-52,-1)
+  ) +
+    theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+          legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(0.1, 0.2, 0, 0.2, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
+up_and_down_enrich_plot
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 6, spaceLegend = .5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# Apply on original plot
+astrocyte_up_and_down_enrich_plot <- addSmallLegend(up_and_down_enrich_plot)
+rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_results, up_enrich_results_subset, down_enrich_results, down_enrich_results_subset)
+```
+
+### VLMC
+```{r metascape}
+# Metascape Enrichment 
+#read in enrichment analysis results
+up_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/VLMC_up/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+down_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/VLMC_down/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+# select the GO term IDs we want to show in the plot
+GO_ID_up <-
+  c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+  )
+GO_ID_down <- c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+)
+
+up_enrich_results_subset <-
+  up_enrich_results[up_enrich_results$GroupID %in% GO_ID_up, ]
+up_enrich_results_subset$Cluster <- c("upregulated")
+up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description,
+         levels = up_enrich_results_subset$Description)
+up_enrich_results_subset$Description <-
+  fct_rev(up_enrich_results_subset$Description)
+
+down_enrich_results_subset <-
+  down_enrich_results[down_enrich_results$GroupID %in% GO_ID_down, ]
+down_enrich_results_subset$Cluster <- c("downregulated")
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description,
+         levels = down_enrich_results_subset$Description)
+down_enrich_results_subset$Description <-
+  fct_rev(down_enrich_results_subset$Description)
+
+# get the number of genes in each summary
+up_gene_count <-
+  strsplit(as.character(up_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+up_gene_count_df <-
+  data.frame(matrix(
+    unlist(up_gene_count),
+    nrow = length(up_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+up_enrich_results_subset$InTerm <- as.numeric(up_gene_count_df$X1)
+up_enrich_results_subset$InList <- as.numeric(up_gene_count_df$X2)
+
+ up_enrich_results_subset$Description <-
+       gsub(
+         "TNF related weak inducer of apoptosis TWEAK signaling",
+         "TNF weak inducer of apoptosis TWEAK signal",
+         up_enrich_results_subset$Description
+       )
+  
+ up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description, levels = unique(up_enrich_results_subset$Description)) 
+
+up_enrich_results_subset$Description <- fct_rev(up_enrich_results_subset$Description)
+
+ 
+down_gene_count <-
+  strsplit(as.character(down_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+down_gene_count_df <-
+  data.frame(matrix(
+    unlist(down_gene_count),
+    nrow = length(down_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+down_enrich_results_subset$InTerm <- as.numeric(down_gene_count_df$X1)
+down_enrich_results_subset$InList <- as.numeric(down_gene_count_df$X2)
+
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description, levels = unique(down_enrich_results_subset$Description)) 
+
+down_enrich_results_subset$Description <- fct_rev(down_enrich_results_subset$Description)
+
+
+# combine together
+up_and_down_enrich_results_subset <- rbind(up_enrich_results_subset, down_enrich_results_subset)
+
+up_and_down_enrich_results_subset$Description <-
+  factor(up_and_down_enrich_results_subset$Description, levels = unique(up_and_down_enrich_results_subset$Description)) 
+
+up_and_down_enrich_results_subset$Description <- fct_rev(up_and_down_enrich_results_subset$Description)
+
+up_and_down_enrich_plot <-
+  ggplot(data = up_and_down_enrich_results_subset, aes(x = InTerm, y = Description)) +
+  ggplot2::facet_grid(~ Cluster, scales = "free") +
+  geom_bar(stat = "identity", aes(fill = LogP), width = .7, position = position_dodge(width = .2)) +
+  theme_bw() +
+ # ggtitle(paste0(tissue," enrichment summaries")) +
+  labs(x = "Gene count", y = NULL) +
+  guides(fill = guide_legend(title = expression(log[10] ~ "(" ~ italic("p") ~ "-value)"))) +
+  scale_fill_gradientn(
+    colours = c(colors=natparks.pals("Denali")),
+    guide = "legend",
+    limits = c(-52,-1)
+  ) +
+    theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+          legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(0.1, 0.2, 0, 0.2, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
+up_and_down_enrich_plot
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 6, spaceLegend = .5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# Apply on original plot
+VLMC_up_and_down_enrich_plot <- addSmallLegend(up_and_down_enrich_plot)
+rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_results, up_enrich_results_subset, down_enrich_results, down_enrich_results_subset)
+```
+
+### oligodendrocyte
+```{r metascape}
+# Metascape Enrichment 
+#read in enrichment analysis results
+up_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/oligodendrocyte_up/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+down_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/oligodendrocyte_down/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+# select the GO term IDs we want to show in the plot
+GO_ID_up <-
+  c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+  )
+GO_ID_down <- c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+)
+
+up_enrich_results_subset <-
+  up_enrich_results[up_enrich_results$GroupID %in% GO_ID_up, ]
+up_enrich_results_subset$Cluster <- c("upregulated")
+up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description,
+         levels = up_enrich_results_subset$Description)
+up_enrich_results_subset$Description <-
+  fct_rev(up_enrich_results_subset$Description)
+
+down_enrich_results_subset <-
+  down_enrich_results[down_enrich_results$GroupID %in% GO_ID_down, ]
+down_enrich_results_subset$Cluster <- c("downregulated")
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description,
+         levels = down_enrich_results_subset$Description)
+down_enrich_results_subset$Description <-
+  fct_rev(down_enrich_results_subset$Description)
+
+# get the number of genes in each summary
+up_gene_count <-
+  strsplit(as.character(up_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+up_gene_count_df <-
+  data.frame(matrix(
+    unlist(up_gene_count),
+    nrow = length(up_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+up_enrich_results_subset$InTerm <- as.numeric(up_gene_count_df$X1)
+up_enrich_results_subset$InList <- as.numeric(up_gene_count_df$X2)
+
+ up_enrich_results_subset$Description <-
+       gsub(
+         "negative regulation of PERK-mediated unfolded protein response",
+         "neg reg of PERK mediated unfolded protein",
+         up_enrich_results_subset$Description
+       )
+  
+ up_enrich_results_subset$Description <-
+       gsub(
+         "Mismatch repair.*",
+         "Mismatch repair directed MSH2:MSH6",
+         up_enrich_results_subset$Description
+       )
+
+  up_enrich_results_subset$Description <-
+       gsub(
+         "Photodynamic therapy induced unfolded protein response",
+         "Photodynamic unfolded protein response",
+         up_enrich_results_subset$Description
+       )
+
+ 
+
+   up_enrich_results_subset$Description <-
+       gsub(
+         "establishment of protein localization to membrane",
+         "protein localization to membrane",
+         up_enrich_results_subset$Description
+       )
+ up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description, levels = unique(up_enrich_results_subset$Description)) 
+
+up_enrich_results_subset$Description <- fct_rev(up_enrich_results_subset$Description)
+
+ 
+down_gene_count <-
+  strsplit(as.character(down_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+down_gene_count_df <-
+  data.frame(matrix(
+    unlist(down_gene_count),
+    nrow = length(down_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+down_enrich_results_subset$InTerm <- as.numeric(down_gene_count_df$X1)
+down_enrich_results_subset$InList <- as.numeric(down_gene_count_df$X2)
+
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description, levels = unique(down_enrich_results_subset$Description)) 
+
+down_enrich_results_subset$Description <- fct_rev(down_enrich_results_subset$Description)
+
+
+# combine together
+up_and_down_enrich_results_subset <- rbind(up_enrich_results_subset, down_enrich_results_subset)
+
+up_and_down_enrich_results_subset$Description <-
+  factor(up_and_down_enrich_results_subset$Description, levels = unique(up_and_down_enrich_results_subset$Description)) 
+
+up_and_down_enrich_results_subset$Description <- fct_rev(up_and_down_enrich_results_subset$Description)
+
+up_and_down_enrich_plot <-
+  ggplot(data = up_and_down_enrich_results_subset, aes(x = InTerm, y = Description)) +
+  ggplot2::facet_grid(~ Cluster, scales = "free") +
+  geom_bar(stat = "identity", aes(fill = LogP), width = .7, position = position_dodge(width = .2)) +
+  theme_bw() +
+ # ggtitle(paste0(tissue," enrichment summaries")) +
+  labs(x = "Gene count", y = NULL) +
+  guides(fill = guide_legend(title = expression(log[10] ~ "(" ~ italic("p") ~ "-value)"))) +
+  scale_fill_gradientn(
+    colours = c(colors=natparks.pals("Denali")),
+    guide = "legend",
+    limits = c(-52,-1)
+  ) +
+    theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+          legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(0.1, 0.2, 0, 0.2, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
+up_and_down_enrich_plot
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 6, spaceLegend = .5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# Apply on original plot
+oligodendrocyte_up_and_down_enrich_plot <- addSmallLegend(up_and_down_enrich_plot)
+rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_results, up_enrich_results_subset, down_enrich_results, down_enrich_results_subset)
+```
+
+### opc
+```{r metascape}
+# Metascape Enrichment 
+#read in enrichment analysis results
+up_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/opc_up/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+down_enrich_results <-
+  read_excel(
+    paste0(
+      "../results/metascape/opc_down/metascape_result.xlsx"
+    ), sheet = 2
+  )
+
+# select the GO term IDs we want to show in the plot
+GO_ID_up <-
+  c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+  )
+GO_ID_down <- c(
+    "1_Summary",
+    "2_Summary",
+    "3_Summary",
+    "4_Summary",
+    "5_Summary",
+    "6_Summary",
+    "7_Summary",
+    "8_Summary",
+    "9_Summary", 
+    "10_Summary"
+
+)
+
+up_enrich_results_subset <-
+  up_enrich_results[up_enrich_results$GroupID %in% GO_ID_up, ]
+up_enrich_results_subset$Cluster <- c("upregulated")
+up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description,
+         levels = up_enrich_results_subset$Description)
+up_enrich_results_subset$Description <-
+  fct_rev(up_enrich_results_subset$Description)
+
+down_enrich_results_subset <-
+  down_enrich_results[down_enrich_results$GroupID %in% GO_ID_down, ]
+down_enrich_results_subset$Cluster <- c("downregulated")
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description,
+         levels = down_enrich_results_subset$Description)
+down_enrich_results_subset$Description <-
+  fct_rev(down_enrich_results_subset$Description)
+
+# get the number of genes in each summary
+up_gene_count <-
+  strsplit(as.character(up_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+up_gene_count_df <-
+  data.frame(matrix(
+    unlist(up_gene_count),
+    nrow = length(up_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+up_enrich_results_subset$InTerm <- as.numeric(up_gene_count_df$X1)
+up_enrich_results_subset$InList <- as.numeric(up_gene_count_df$X2)
+
+ up_enrich_results_subset$Description <-
+       gsub(
+         "TNF related weak inducer of apoptosis TWEAK signaling",
+         "TNF weak inducer of apoptosis TWEAK signal",
+         up_enrich_results_subset$Description
+       )
+  
+ up_enrich_results_subset$Description <-
+  factor(up_enrich_results_subset$Description, levels = unique(up_enrich_results_subset$Description)) 
+
+up_enrich_results_subset$Description <- fct_rev(up_enrich_results_subset$Description)
+
+ 
+down_gene_count <-
+  strsplit(as.character(down_enrich_results_subset$InTerm_InList),
+           "/",
+           fixed = T)
+down_gene_count_df <-
+  data.frame(matrix(
+    unlist(down_gene_count),
+    nrow = length(down_gene_count),
+    byrow = TRUE
+  ), stringsAsFactors = FALSE)
+down_enrich_results_subset$InTerm <- as.numeric(down_gene_count_df$X1)
+down_enrich_results_subset$InList <- as.numeric(down_gene_count_df$X2)
+
+down_enrich_results_subset$Description <-
+  factor(down_enrich_results_subset$Description, levels = unique(down_enrich_results_subset$Description)) 
+
+down_enrich_results_subset$Description <- fct_rev(down_enrich_results_subset$Description)
+
+
+# combine together
+up_and_down_enrich_results_subset <- rbind(up_enrich_results_subset, down_enrich_results_subset)
+
+up_and_down_enrich_results_subset$Description <-
+  factor(up_and_down_enrich_results_subset$Description, levels = unique(up_and_down_enrich_results_subset$Description)) 
+
+up_and_down_enrich_results_subset$Description <- fct_rev(up_and_down_enrich_results_subset$Description)
+
+up_and_down_enrich_plot <-
+  ggplot(data = up_and_down_enrich_results_subset, aes(x = InTerm, y = Description)) +
+  ggplot2::facet_grid(~ Cluster, scales = "free") +
+  geom_bar(stat = "identity", aes(fill = LogP), width = .7, position = position_dodge(width = .2)) +
+  theme_bw() +
+ # ggtitle(paste0(tissue," enrichment summaries")) +
+  labs(x = "Gene count", y = NULL) +
+  guides(fill = guide_legend(title = expression(log[10] ~ "(" ~ italic("p") ~ "-value)"))) +
+  scale_fill_gradientn(
+    colours = c(colors=natparks.pals("Denali")),
+    guide = "legend",
+    limits = c(-52,-1)
+  ) +
+    theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+          legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(0.1, 0.2, 0, 0.2, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
+up_and_down_enrich_plot
+
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 6, spaceLegend = .5) {
+    myPlot +
+        guides(shape = guide_legend(override.aes = list(size = pointSize)),
+               color = guide_legend(override.aes = list(size = pointSize))) +
+        theme(legend.title = element_text(size = textSize), 
+              legend.text  = element_text(size = textSize),
+              legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# Apply on original plot
+opc_up_and_down_enrich_plot <- addSmallLegend(up_and_down_enrich_plot)
+rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_results, up_enrich_results_subset, down_enrich_results, down_enrich_results_subset)
+```
+
+
+
+# 3- Supplemental Figure 3 - astrocytes and VLMC combined
+```{r supplementalFig3_combined}
+row1 <-
+  ggarrange(
+    astrocyte_vol_plot,
+    astrocyte_up_and_down_enrich_plot,
+    ncol = 2,
+  widths = c(2.25, 4.75), 
+  labels = c("A","B"), 
+  font.label = list(size = 10)
+    )
+
+row2 <-
+  ggarrange(
+    VLMC_vol_plot,
+    VLMC_up_and_down_enrich_plot,
+    ncol = 2,
+  widths = c(2.25, 4.75), 
+  labels = c("C","D"), 
+  font.label = list(size = 10)
+    )
+supplementalFigure3 <-
+  ggarrange(
+    row1,
+    row2,
+    nrow = 2,
+    heights = c(1, 1.15)
+    )
+supplementalFigure3
+path <- paste0("../manuscript_figures/Supplemental_figure_3")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
+```
+
+
+# 4- Supplemental Figure 4 - oligodendrocytes and opc, and neurons combined
+```{r supplementalFig4_combined}
+row1 <-
+  ggarrange(
+    oligodendrocyte_vol_plot,
+    oligodendrocyte_up_and_down_enrich_plot,
+    ncol = 2,
+  widths = c(2.25, 4.75), 
+  labels = c("A","B"), 
+  font.label = list(size = 10)
+    )
+
+row2 <-
+  ggarrange(
+    opc_vol_plot,
+    opc_up_and_down_enrich_plot,
+    ncol = 2,
+  widths = c(2.25, 4.75), 
+  labels = c("C","D"), 
+  font.label = list(size = 10)
+    )
+
+row3 <-
+  ggarrange(
+    neuron_vol_plot,
+    NULL,
+    ncol = 2,
+  widths = c(2.25, 4.75), 
+  labels = c("E",""), 
+  font.label = list(size = 10)
+    )
+
+supplementalFigure4 <-
+  ggarrange(
+    row1,
+    row2,
+    row3,
+    nrow = 3,
+    heights = c(1, 1,1)
+    )
+supplementalFigure4
+path <- paste0("../manuscript_figures/Supplemental_figure_4")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
+```
+
+
+

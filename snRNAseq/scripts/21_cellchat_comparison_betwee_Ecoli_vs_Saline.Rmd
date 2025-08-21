@@ -546,5 +546,94 @@ save(cellchat, file = "../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
 
 load("../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
 load("../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+```
+
+# Manuscript figure
+```{r}
+file_name <- paste0(data.dir,"signaling_between_cells_chord.pdf")
+pdf(file_name, width = 10, height = 10) 
+
+par(mfrow = c(1, 2), xpd=TRUE)
+# compare all the interactions sending from one cell type to the other cell types 
+for (i in 1:length(object.list)) {
+  netVisual_chord_gene(object.list[[i]], sources.use = 2, targets.use = c(1:8), lab.cex = 0.5, title.name = paste0("Signaling from ", names(object.list)[i]))
+}
+
+dev.off()
+```
+
+### Identify the signaling changes of specific cell populations
+# 1. Combine data from all cell types into a single data frame
+```{r}
+# 1. Combine data from all cell types into a single data frame
+df_all <- tibble()
+celltypes_to_plot <- c("microglia", "astrocyte", "endothelial", "mural", "VLMC", "oligodendrocyte", "opc", "neuron")
+
+for (celltype in celltypes_to_plot) {
+  # This part of the code is the key to extracting the data for each cell type.
+  # The function `netAnalysis_signalingChanges_scatter` returns a ggplot object,
+  # but the underlying data is stored within that object. We'll extract it.
+  # A simple way to do this is to temporarily create a plot and then extract the data.
+  # A more direct method might be available depending on the exact CellChat object structure,
+  # but this is a reliable workaround.
+
+  gg_temp <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = celltype, color.use = c("grey", "black", "green3"))
+  
+  # Extract data from the temporary ggplot object
+  df_temp <- gg_temp$data
+  
+  # Add a column for the cell type to be used for faceting
+  df_temp$celltype <- celltype
+  
+  # Combine with the main data frame
+  df_all <- bind_rows(df_all, df_temp)
+}
+
+# 2. Reorder the cell types for plotting
+df_all$celltype <- factor(df_all$celltype, levels = celltypes_to_plot)
+
+# This function creates a smaller, more compact legend
+addSmallLegend <- function(myPlot, pointSize = 3, textSize = 6, spaceLegend = .5) {
+  myPlot +
+    guides(shape = guide_legend(override.aes = list(size = pointSize)),
+           color = guide_legend(override.aes = list(size = pointSize))) +
+    theme(legend.title = element_text(size = textSize), 
+          legend.text  = element_text(size = textSize),
+          legend.key.size = unit(spaceLegend, "lines"))
+}
+
+# 3. Create a single plot with facet_wrap, adding shapes and labels
+file_name <- paste0(data.dir, "all_cell_types_signal_change_updated_with_labels.pdf")
+pdf(file_name, width = 7, height = 9) # Adjusted dimensions to accommodate labels
+
+gg_final <- ggplot(df_all, aes(x = outgoing, y = incoming, color = specificity, shape = specificity.out.in)) +
+  geom_point(alpha = 0.6, size = 2) +
+  geom_text(aes(label = labels), hjust = -0.25, vjust = 0.5, size = 2.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
+  scale_color_manual(values = c("Shared" = "grey60", "Saline specific" = "black", "Ecoli specific" = "green3"),
+                     labels = c("Shared", "Saline specific ", "Ecoli specific")) +
+  scale_shape_manual(values = c("Shared" = 16, "Incoming specific" = 15, "Outgoing specific" = 17, "Incoming & Outgoing specific" = 18),
+                     name = "Signal Direction") +
+  labs(
+    x = "Outgoing Signaling Changes (Ecoli vs Saline)",
+    y = "Incoming Signaling Changes (Ecoli vs Saline)",
+    color = "Signaling Class"
+  ) +
+  facet_wrap(~ celltype, ncol = 2, scales = "free") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          axis.title.y = element_text(size = 8), 
+          plot.margin = margin(0.2, 0.1, 0.2, 0.1, "cm"), 
+          plot.title = element_text(size = 8, margin = margin(0,0,0,0)))
+
+# Apply the small legend function to the final plot
+gg_final <- addSmallLegend(gg_final)
+
+print(gg_final)
+dev.off()
 
 ```
