@@ -35,6 +35,12 @@ color.panel <- dittoColors()
 library(NatParksPalettes)
 library("readxl")
 library(patchwork) 
+library(ggpubr)
+library(gridExtra)
+library(patchwork)
+library(ggplotify)
+library(magick)
+
 
 my_seurat_theme <- function() {
   theme_classic() + # Start with a base theme
@@ -1962,18 +1968,116 @@ row2 <-
   font.label = list(size = 10)
     )
 
-figure3 <-
+figure5 <-
   ggarrange(
     row1,
     row2,
     nrow = 2,
     heights = c(1, 1.5)
     )
-figure3
+figure5
 path <- paste0("../manuscript_figures/Figure_5_microglia")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 ```
 
+# Figure 6 cellchat
+```{r}
+#load("../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+#load("../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+
+# Convert to ggplot-compatible object
+gg1 <- netVisual_heatmap(cellchat)
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+compare_heatmap <- (gg1 + gg2) 
+
+# Step 1: Create temporary image file
+tmp_file <- tempfile(fileext = ".png")
+
+# Step 2: Save the Ecoli plot to this file
+png(tmp_file, width = 1000, height = 1000, res = 300)
+compare_heatmap
+dev.off()
+# Step 3: Read the image and convert to ggplot-compatible object
+compare_heatmap_plot <- as.ggplot(image_read(tmp_file))
+
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), color.use = c("black", "green3"))+ theme(
+  strip.text = element_text(size = 8),
+  axis.text.y = element_text(size = 8),
+  axis.text.x = element_text(size = 8),
+  axis.title.x = element_text(size = 8),
+  plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
+  scale_y_discrete(expand = expansion(mult = c(0, 0.2))) # Adjusts y-axis expansion
+
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight", color.use = c("black", "green3"), digits = 2)+ theme(
+  strip.text = element_text(size = 8),
+  axis.text.y = element_text(size = 8),
+  axis.text.x = element_text(size = 8),
+  axis.title.x = element_text(size = 8),
+  plot.margin = margin(0.2, 0.2, 0.2, 0.2, "cm")) +
+  scale_y_discrete(expand = expansion(mult = c(0, 0.2))) # Adjusts y-axis expansion
+
+compare_interactions <- gg1 + gg2
+
+
+# Step 1: Create temporary image file
+tmp_file <- tempfile(fileext = ".png")
+
+# Step 2: Save the Ecoli plot to this file
+png(tmp_file, width = 1000, height = 1000, res = 350)
+netVisual_chord_gene(object.list$Ecoli, sources.use = 2, targets.use = c(1:8),
+                     lab.cex = 0.5, title.name = NULL, show.legend = FALSE)
+dev.off()
+# Step 3: Read the image and convert to ggplot-compatible object
+Ecoli_plot <- as.ggplot(image_read(tmp_file))
+Ecoli_plot
+path <- paste0("../manuscript_figures/Ecoli_plot")
+saveToPDF(paste0(path, ".pdf"), width = 3.5, height = 3)
+
+# Step 1: Create temporary image file
+tmp_file <- tempfile(fileext = ".png")
+
+# Step 2: Save the Ecoli plot to this file
+png(tmp_file, width = 1000, height = 1000, res = 350)
+netVisual_chord_gene(object.list$Saline, sources.use = 2, targets.use = c(1:8),
+                     lab.cex = 0.5, title.name = NULL, show.legend = FALSE)
+dev.off()
+
+# Step 3: Read the image and convert to ggplot-compatible object
+Saline_plot <- as.ggplot(image_read(tmp_file))
+Saline_plot
+path <- paste0("../manuscript_figures/Saline_plot")
+saveToPDF(paste0(path, ".pdf"), width = 12, height = 12)
+
+row1 <-
+  ggarrange(
+    NULL,
+    NULL,
+    ncol = 2,
+  widths = c(2.5, 4), 
+  labels = c("A",""), 
+  font.label = list(size = 10)
+    )
+
+row2 <-
+  ggarrange(
+  NULL,
+  NULL,
+  ncol = 2,
+  labels = c("B", "C"), 
+  font.label = list(size = 10)
+    )
+
+figure6 <-
+  ggarrange(
+    row1,
+    row2,
+    nrow = 2,
+    heights = c(1.25, 2)
+    )
+figure6
+path <- paste0("../manuscript_figures/Figure_6_cellchat_V2")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
+```
 
 
 

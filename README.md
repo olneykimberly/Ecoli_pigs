@@ -1,5 +1,5 @@
 # Ecoli_pigs
-Bulk RNAseq of Sus scrofa (pigs) that received either saline or Escherichia coli  (E. coli).
+Bulk and single nucleus RNAseq of Sus scrofa (pigs) that received either saline or Escherichia coli  (E. coli).
 
 The goal of this experiment is to identify differentially expressed genes (DEGs) between experimental groups.  Pigs were injected with saline (control) or Escherichia coli  (E. coli) to model sepsis.  Brain cotrex samples were collected and sent for bulk RNA and single nucleus RNA sequencing.
 
@@ -57,7 +57,7 @@ You may need to adjust pathways within the config.json file to be to the locatio
 snakemake -s Snakefile
 ```
 
-### 3. preform differntial expression
+### 3. preform bulk differntial expression
 First, you will need to create sub-directories within the results folders. This is where the results from running differential expression will be placed. 
 ```
 cd results/
@@ -68,10 +68,26 @@ Move to the scripts R folder.
 ```
 cd ../scripts/R/
 R 04a_stats.R # Statistical analysis of clinical and pathological measurements
-R 04_differential_expression.Rmd # gene-level differential expression 
+R 04_differential_expression_4Ecoli_vs_4Saline.Rmd # gene-level differential expression 
 ```
 
-Scripts for making the manuscript figures are located in the folder called manuscript_figures.
+
+### 4. single nuclues RNAseq data alignment, QC, and differential expression. 
+Frozen brain samples from the same pigs used for bulk RNAseq analysis (n = 4 pigs per group) were used for  single nucleus. Alignment of the single nucleus 10x Genomics data to the Ensembl reference genome Sscrofa11.1 v107 was carried out using the Cellranger. Cellbender v0.3.2 was used to remove technical noise from the single nucleus data that may result from enzymatic processes and produce library fragments leading to contamination.
+
+```
+cd /snRNAseq/scripts/
+
+conda activate cellbender_py38
+
+# create config file for snakemake pipeline to align the reads and remove ambient RNA
+sh 00_rename_fastq_files.hs
+sh 01_get_read_info.sh
+py 02_create_config.py
+sh 03_run_Snakefile.sh # must update to your HPC system
+```
+
+The counts adjusted single nucleus count data from Cellbender was then imported into R v4.3.0 using the Seurat v5.0.2 package for quality filtering, dimensionality reduction, clustering, QC, differential expression, and cellchat analysis. R scripts 04 through 21. 
 
 ## Contacts
 
