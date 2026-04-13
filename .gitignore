@@ -7,7 +7,7 @@ all_pigs_combined_metadata.tsv
 Sepsis_Pig_Transcriptome_Full_Comparison.xlsx
 bulk_RNAseq/scripts/.snakemake
 bulk_RNAseq/scripts/.snakemake/*
-bulk_RNAseq/scripts/05*
+bulk_RNAseq/scripts/file_paths_and_colours_with_LPS.R
 bulk_RNAseq/scripts/06*
 bulk_RNAseq/LPS_pigs/*
 bulk_RNAseq/rObjects/*

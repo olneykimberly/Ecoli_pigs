@@ -839,7 +839,7 @@ supplementalFigure <-
     heights = c(1.45, 1)
     )
 supplementalFigure
-path <- paste0("bulk_RNAseq/results/manuscript_figures/Supplemental_figure_2_bulkRNA_variance")
+path <- paste0("bulk_RNAseq/results/manuscript_figures/Supplemental_figure_bulkRNA_variance")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 ```
 
