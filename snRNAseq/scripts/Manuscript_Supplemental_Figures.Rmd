@@ -778,6 +778,9 @@ for (i in allComparisons) {
     group1_vs_group2 <- na.omit(group1_vs_group2)
     negFC <- c(-1)
     posFC <- c(1) 
+    data <- group1_vs_group2
+    hadjpval <- (-log10(max(data$pvalue[data$padj < 0.05],
+                            na.rm = TRUE)))
     neuron_vol_plot <-
       ggplot(data = data,
              aes(
@@ -794,6 +797,10 @@ for (i in allComparisons) {
         x = expression(log[2](FC)),
         y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")
       )  +
+      geom_hline(yintercept = hadjpval,
+                 #  horizontal line
+                 colour = "#000000",
+                 linetype = "dashed") +
       geom_vline(xintercept = negFC,
                  #  horizontal line
                  colour = "#000000",

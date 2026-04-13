@@ -1,4 +1,6 @@
 #----------------- Libraries
+.libPaths(c("/home/kolney/R/x86_64-pc-linux-gnu-library/"))
+.libPaths()
 library(remaCor)
 library(BiocParallel) 
 library(edgeR)  
@@ -8,10 +10,10 @@ library(gplots)
 library(grDevices)  
 library(stringr) 
 library(variancePartition) 
-library(tximport)
+#library(tximport)
 library(tidyverse)
 library(GenomicFeatures)
-library(tximportData)
+#library(tximportData)
 #library(wasabi)
 #library(sleuth)
 library(dplyr)
@@ -23,7 +25,8 @@ library(data.table)
 library(glmGamPoi)
 library(readxl)
 library(UpSetR)
-
+library(matrixStats)
+library(ggpubr)
 
 #----------------- Define variables
 tissue <- c("Brain") # Kidney or Brain
@@ -35,12 +38,19 @@ LPS_color <- "purple"
 output_dir <- c("") 
 typeOfCount <- c("STAR.bamReadsPerGene.out.tab") 
 pathToRef <- c("/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/")
-
+metadata <- 
+  read.delim((
+    "/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/brain_metadata.tsv"
+  ),
+  header = TRUE,
+  sep = "\t"
+  )
+brain_metadata <- metadata
 #----------------- Data
 # read in Ecoli metadata
 Ecoli_meta <-
   read.delim((
-    "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/metadata.tsv"
+    "/tgen_labs/jfryer/projects/sepsis/pig/Ecoli/metadata.tsv"
   ),
   header = TRUE,
   sep = "\t"
@@ -70,8 +80,8 @@ names(Ecoli_count_files) <- paste0(Ecoli_meta$sample)
 Ecoli_meta$path <- Ecoli_count_files
 Ecoli_meta$sample <- Ecoli_meta$pig_id
 Ecoli_meta$condition <- as.factor(Ecoli_meta$group)
-
-
+metadata <- subset(Ecoli_meta, dose == "high")
+unique(metadata$pig_id)
 # Read data LPS data
 # read in metadata
 LPS_meta <-

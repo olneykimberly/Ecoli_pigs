@@ -11,7 +11,7 @@ Compare Ecoli vs Saline
 # Set up working enivornment
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = ".")
-getwd()
+setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/")
 ```
 
 ```{r libraries, message=FALSE, warning=FALSE}
@@ -76,6 +76,13 @@ genes <- read.delim("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/rObjects/v7
 
 # Check inputs
 ```{r check_inputs}
+common_genes <- intersect(rownames(count_data), genes$gene_id)
+count_data <- count_data[common_genes, ] 
+genes <- genes[genes$gene_id %in% common_genes, ]
+genes <- genes[match(rownames(count_data), genes$gene_id), ]
+all.equal(rownames(count_data), genes$gene_id)
+
+
 all.equal(rownames(count_data), genes$gene_id) # gene ids match the count rows
 all.equal(colnames(count_data), (brain_metadata$counts_name)) # counts columns match the sample IDs
 ```
@@ -118,6 +125,7 @@ plotMDS(
   plot = TRUE,
   col = condition_colors
 )
+getwd()
 title(expression('Top 500 Genes - Raw (Log'[2] ~ 'CPM)'))
 saveToPDF("../results/MDS/MDS_raw_condition.pdf", width = 6, height = 6)
 
@@ -187,6 +195,7 @@ dim(dge.tech)
 removeMT <- dge.tech$genes$gene_biotype == "protein_coding"  # true when NOT MT
 dge.tech <- dge.tech[removeMT,,keep.lib.sizes = FALSE]
 dim(dge.tech)
+table(dge.tech$genes$gene_biotype)
 ```
 
 # Library sizes
@@ -421,7 +430,18 @@ varPart <- fitExtractVarPartModel(voomCounts, form_varPart, info)
 
 # Plot VarPart
 ```{r plot_varPart}
-plotVarPart(sortCols(varPart), label.angle = 80)
+varpart_plot <- plotVarPart(sortCols(varPart), label.angle = 80) + 
+  theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          axis.title.y = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+          legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(0.5, 0.25, 0, 0.25, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
 saveToPDF("../results/variance/variance_partition_violins.pdf", width = 8.5, height = 5)
 
 varPart$gene_id <- rownames(varPart)
@@ -519,7 +539,7 @@ sumTable <-
 
 print(paste0(" q < ", qval, " & absolute log2-fold change > ", lfc.cutoff))
 sumTable
-write.table(sumTable, paste0("../results/DEGs/DEGs_summary_q0.05_log2FC1.txt"), quote = FALSE, sep = "\t")
+#write.table(sumTable, paste0("../results/DEGs/DEGs_summary_q0.05_log2FC1.txt"), quote = FALSE, sep = "\t")
 genes_relevant <- dge.filtered.norm$genes
 
 rm(sumTable)
@@ -602,6 +622,24 @@ dim1_10$sample <- rownames(dim1_10)
 pcaWithMetadata <- merge(dim1_10, info, by = "sample", all = TRUE)
 pcaWithMetadata$group <- pcaWithMetadata$condition
 
+pca_plot <- ggplot(data = pcaWithMetadata, aes(x = PC1, y = PC2, shape = group, color = group)) +
+  geom_point(size = 2.5) +
+  theme_bw() +
+  scale_color_manual(values = c("Saline" = "gray29", 
+                                "Ecoli" = "darkgreen")) +
+  theme(strip.text = element_text(size = 8), 
+          axis.text.y = element_text(size = 8),
+          axis.text.x = element_text(size = 8), 
+          axis.title.x = element_text(size = 8), 
+          axis.title.y = element_text(size = 8), 
+          legend.text = element_text(size = 8),
+          legend.title = element_text(size = 8),
+          legend.margin=margin(0,0.5,0,0),
+         # legend.box.margin=margin(-10,-2,-10,-7.5), 
+          plot.margin = margin(.65, .25, .65, .25, "cm"), 
+          plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
+
+pca_plot
 # Plotting
 ggplot(data = pcaWithMetadata, aes(x = PC1, y = PC2, shape = group, color = group)) +
   geom_point(size = 2.5) +
@@ -620,9 +658,9 @@ write.table(pcaWithMetadata, "../results/PCA/PCA_metadata.txt", quote = FALSE, s
 ```{r CCA_PCA}
 form_PCA <- ~ condition + duration_min + age_days + end_heart_rate + end_temp + 
   PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 
-C = canCorPairs(form_PCA, pcaWithMetadata)
-plotCorrMatrix( C )
-saveToPDF("../results/variance/CCA_with_PCA.pdf", width = 8, height = 8)
+C = canCorPairs(form_PCA, pcaWithMetadata) 
+plotCorrMatrix( C ) 
+saveToPDF("../results/variance/CCA_with_PCA.pdf", width = 4, height = 4)
 
 rm(dim1_10, highly_variable_exp, pcaWithMetadata, pca_exp, voomCounts, cv2, means, ntop, path, select, Pvars, C, form_PCA)
 ```
@@ -834,4 +872,35 @@ glimmaVolcano(veBayesFit, dge = dge.filtered.norm, groups = dge.filtered.norm$sa
 
 
 #sessionInfo()
+```
+
+# Supplemental Figure - PCA, CCA, variance, 
+```{r supplementalFig4_combined}
+row1 <-
+  ggarrange(
+    pca_plot,
+    print(cca_plot),
+    ncol = 2,
+  widths = c(1, 1.25), 
+  labels = c("A","B"), 
+  font.label = list(size = 10)
+    )
+
+row2 <-
+  ggarrange(
+    varpart_plot,
+    labels = c("C"), 
+    font.label = list(size = 10)
+    )
+
+supplementalFigure4 <-
+  ggarrange(
+    row1,
+    row2,
+    nrow = 2,
+    heights = c(1.45, 1)
+    )
+supplementalFigure4
+path <- paste0("../results/manuscript_figures/Supplemental_figure_2_bulkRNA_variance")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 ```

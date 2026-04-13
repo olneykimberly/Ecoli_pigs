@@ -39,7 +39,7 @@ library(ggpubr)
 library(gridExtra)
 library(patchwork)
 library(ggplotify)
-library(magick)
+#library(magick)
 
 
 my_seurat_theme <- function() {
@@ -83,7 +83,7 @@ dataObject$group <- plyr::mapvalues(
 )
 
 # 4. Verify the changes
-unique(dataObject$group)
+unique(table(dataObject$group))
 ```
 # Figure 1 - bulk RNAseq
 ### a) bulk volcano
@@ -449,6 +449,8 @@ a) UMAP, b) relative abundance,  c) bubble plot,
 ### a) UMAP
 ```{r UMAP}
 # a) UMAP
+#dataObject$group <- factor(dataObject$group, levels = c("Saline", "Ecoli"))
+#dataObject$individual_clusters
 UMAP_ind <- dittoDimPlot(object = dataObject,
                          var = "individual_clusters",
                          size = .25,
@@ -471,6 +473,30 @@ UMAP_ind <- UMAP_ind +
     plot.title = element_text(size = 8)    
   )
 UMAP_ind
+
+UMAP_split <- dittoDimPlot(object = dataObject,
+                         var = "individual_clusters",
+                         size = .25,
+                         split.by = "group",
+                         reduction.use = "umap",
+                         do.label = FALSE,
+                         labels.size = 2.5,
+                         shape.legend.size = 2,
+                         labels.highlight = TRUE,
+                         labels.repel = TRUE,
+                         legend.show = TRUE)
+UMAP_split <- UMAP_split +
+  ggtitle("Annotated clusters") +
+  theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8)    
+  )
+UMAP_split
 ```
 ### b) relative abundance by group
 ```{r relative_abundance}
@@ -586,18 +612,20 @@ dot_ind
 # path <- paste0("../manuscript_figures/Figure_2_umap_rel_abun_dotplot")
 # saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 
+
 # Option 2
+getwd()
 Option1 <-
   ggarrange(
-    UMAP_ind,
+    UMAP_split,
     dot_ind,
     nrow = 2,
   labels = c("A","B"), 
   font.label = list(size = 10)
     )
 Option1
-path <- paste0("../manuscript_figures/Figure_2_umap_dotplot")
-saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
+path <- paste0("../manuscript_figures/Figure_2_umap_dotplot_updated")
+saveToPDF(paste0(path, ".pdf"), width = 7, height = 5.25)
 ```
 
 # Figure 3 - Endothelial 
