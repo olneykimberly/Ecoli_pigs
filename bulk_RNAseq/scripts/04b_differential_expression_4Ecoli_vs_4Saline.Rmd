@@ -6,16 +6,22 @@ output:
   pdf_document: default
 ---
 
-Compare Ecoli vs Saline
+Differential expression analysis comparing Ecoli vs. Saline-control pigs using the limma-voom pipeline
+
+# Data processing overview
+Data Ingestion & QC: Aggregates raw counts into a matrix, maps STAR metrics, and filters out mitochondrial and non-protein-coding genes.
+Normalization: Applies the Trimmed Mean of M-values (TMM) method to account for composition bias and library size differences.
+Variance Modeling: Utilizes the variancePartition package to quantify the contribution of biological (condition, age) and technical (RIN, duration) variables to total gene expression variance.
+DE Analysis: Implements a linear model with voomWithDreamWeights to handle mean-variance relationships, followed by empirical Bayes moderation (eBayes) for robust statistical inference.
+Visualization: Generates diagnostic plots including MDS (Multi-Dimensional Scaling), library density, boxplots, and results-driven plots like Volcano, PCA, and Canonical Correlation Analysis (CCA).
 
 # Set up working enivornment
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = ".")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/")
 ```
 
 ```{r libraries, message=FALSE, warning=FALSE}
-source("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/file_paths_and_colours.R")
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 ```
 
 # Create a counts matrix
@@ -68,10 +74,9 @@ count_data <- count_data[!grepl("N_", count_data$V1),]
 row.names(count_data) <- count_data$V1
 count_data$V1 <- NULL
 # set column names to sample counts file name
-colnames(count_data) <- brain_metadata$counts_name
+colnames(count_data) <- metadata$counts_name
 
-genes <- read.delim("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/rObjects/v7_ensembl_protein_coding_genes_v2.txt"
-)
+genes <- read.delim("bulk_RNAseq/v7_ensembl_protein_coding_genes.txt")
 ```
 
 # Check inputs
@@ -84,14 +89,14 @@ all.equal(rownames(count_data), genes$gene_id)
 
 
 all.equal(rownames(count_data), genes$gene_id) # gene ids match the count rows
-all.equal(colnames(count_data), (brain_metadata$counts_name)) # counts columns match the sample IDs
+all.equal(colnames(count_data), (metadata$counts_name)) # counts columns match the sample IDs
 ```
 
 # Create DGE object
 ```{r DGE_object}
 # create object
 dge <- DGEList(counts = count_data,
-               samples = brain_metadata,
+               samples = metadata,
                genes = genes)
 
 # Inspect
@@ -125,56 +130,16 @@ plotMDS(
   plot = TRUE,
   col = condition_colors
 )
-getwd()
 title(expression('Top 500 Genes - Raw (Log'[2] ~ 'CPM)'))
-saveToPDF("../results/MDS/MDS_raw_condition.pdf", width = 6, height = 6)
+saveToPDF("bulk_RNAseq/results/MDS/MDS_raw_condition.pdf", width = 6, height = 6)
 
 ```
 
-# JSD heatmap
-This portion won't display in the R Markdown pdf; the margins are too large.
-The pdf and png file can only be saved one at a time.
-```{r JSD, warning = FALSE, eval=FALSE}
-# save
-path <- ("../results/JSD/JSD_raw")
-pdf(paste0(path,".pdf"), width = 10, height = 8, pointsize = 8)
-
-# set heatmap colors and names
-colors <- c("blue","skyblue","white") # set heatmap color scale
-colors <- colorRampPalette(colors)(100) # make it a gradient
-sample_group_color <- c("gray", "darkgreen")[dge$samples$condition]
-names <- paste(dge$samples$simplified_name)
-
-# find JSD
-data <- JSD(t(edgeR::cpm(dge$counts)), est.prob = "empirical")
-colnames(data) <- names
-rownames(data) <- names
-round.data <- round(data, digits = 2) # round 2 decimal places
-
-# plot heatmap
-heatmap <- heatmap.2(
-  round.data,
-  trace = "none",
-  colCol = sample_group_color,
-  colRow = sample_group_color,
-  symm = TRUE,
-  col = colors,
-  cellnote = round.data,
-  notecex = 1,
-  dendrogram = "none",
-  notecol = "black",
-  key.title = "Color Key",
-  srtCol = 65,
-  margins = c(12,12),
-  keysize = 0.2)
-
-# clean up
-rm(data, round.data, colors, path, names)
-```
 
 # Sum technical replicates
 ```{r techReps}
 # sum technical replicates
+# There are no replicates in this study
 dim(dge)
 dge.tech <- sumTechReps(dge, dge$samples$sample)
 dim(dge.tech$counts)
@@ -251,6 +216,7 @@ dge.filtered.norm$genes <- dge.filtered.norm$genes %>% mutate(gene_name = coales
 # check for duplication
 table(duplicated(dge.filtered.norm$genes$gene_name))
 ```
+
 # Clean up
 ```{r cleanup}
 rm(count_data, lcpm, keep.expr, normfactors, removeMT, condition_colors, L, M, typeOfCount)
@@ -276,7 +242,7 @@ plotMDS(
   col = condition_colors
 )
 title(expression('Top 500 Genes - Filtered (Log'[2] ~ 'CPM)'))
-saveToPDF("../results/MDS/MDS_filtered_condition.pdf", width = 6, height = 6)
+saveToPDF("bulk_RNAseq/results/MDS/MDS_filtered_condition.pdf", width = 6, height = 6)
 ```
 
 # Density plot
@@ -320,7 +286,7 @@ for (i in 2:nsamples) {
 }
 
 # save
-path <- ("../results/library/gene_density")
+path <- ("bulk_RNAseq/results/library/gene_density")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 5)
 ```
 
@@ -384,7 +350,7 @@ axis(
   las = 2,
   cex.axis = 0.8
 )
-path <- ("../results/library/lcpm_boxplots")
+path <- ("bulk_RNAseq/results/library/lcpm_boxplots")
 saveToPDF(paste0(path, ".pdf"), width = 11, height = 5)
 
 # clean up
@@ -393,18 +359,19 @@ rm(log2cpm.tech, log2cpm.norm, log2cpm.filtered, den, colors, nsamples, path, i)
 
 # save filtered dge
 ```{r save_dge_filtered_norm}
-saveRDS(dge.filtered.norm, file = "../rObjects/dge.filtered.norm.4vs4.rds")
-rm(dge, dge.tech, dge.filtered, lcpm, tx2gene, condition_colors)
+saveRDS(dge.filtered.norm, file = "bulk_RNAseq/rObjects/dge.filtered.norm.4vs4.rds")
+rm(dge, dge.tech, dge.filtered, lcpm, condition_colors)
 ```
 
 Voom transform counts to use for variancePartition  
 ```{r voom, warning=FALSE}
-condition_dose <- factor(dge.filtered.norm$samples$condition_dose, levels = c("Control",  "Ecoli"))
+condition<- factor(dge.filtered.norm$samples$condition, levels = c("Control",  "Ecoli"))
 duration_min <- dge.filtered.norm$samples$duration_min
 
-formula <- (~ 0 + condition_dose)
+formula <- (~ 0 + condition)
 counts <- as.data.frame(dge.filtered.norm$counts)
 info <- as.data.frame(dge.filtered.norm$samples)
+rownames(info) <- info$sample
 voom_with_weights <-
   variancePartition::voomWithDreamWeights(
     counts = counts,
@@ -413,7 +380,7 @@ voom_with_weights <-
     BPPARAM = BiocParallel::SnowParam(8),
     plot = TRUE
   )
-path <- paste0("../results/voom/voom_raw")
+path <- paste0("bulk_RNAseq/results/voom/voom_raw")
 saveToPDF(paste0(path, ".pdf"), width = 6, height = 4)
 voomCounts <- voom_with_weights$E
 rm(voom_with_weights, formula)
@@ -421,10 +388,13 @@ rm(voom_with_weights, formula)
 
 # Fit variance 
 variancePartition quantifies and interprets multiple sources of biological and technical variation in gene expression experiments. The package a linear mixed model to quantify variation in gene expression attributable to individual, tissue, time point, or technical variables.
+
+Error when trying to include SpO2
+! Initial model failed:
+convergence code -4 from nloptwrap: NLOPT_ROUNDOFF_LIMITED: Roundoff errors led to a breakdown of the optimization algorithm. In this case, the returned minimum may still be useful. (e.g. this error occurs in NEWUOA if one tries to achieve a tolerance too close to machine precision.)
 ```{r varpart}
-form_varPart <- ~ (1|condition) + duration_min + age_days + end_heart_rate + end_temp
+form_varPart <- ~ (1|condition) + duration_min + age_days + end_heart_rate + end_temp + RIN
 # fit model and extract variance percents
-rownames(info) <- info$pig_id
 varPart <- fitExtractVarPartModel(voomCounts, form_varPart, info)
 ```
 
@@ -442,32 +412,31 @@ varpart_plot <- plotVarPart(sortCols(varPart), label.angle = 80) +
           legend.box.margin=margin(-10,-2,-10,-7.5), 
           plot.margin = margin(0.5, 0.25, 0, 0.25, "cm"), 
           plot.title = element_text(size = 8, hjust = -3.25, vjust=0, margin = margin(0,0,0,0)))
-saveToPDF("../results/variance/variance_partition_violins.pdf", width = 8.5, height = 5)
+saveToPDF("bulk_RNAseq/results/variance/variance_partition_violins.pdf", width = 8.5, height = 5)
 
 varPart$gene_id <- rownames(varPart)
 # merge with gene information to get gene names for gene_id
 variance_explained <- merge(varPart, genes, by = "gene_id")
 
-write.table(variance_explained, "../results/variance/variance_explained.tsv",sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(variance_explained, "bulk_RNAseq/results/variance/variance_explained.tsv",sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 # Save varPart
 ```{r save_varPart}
-saveRDS(varPart,   "../rObjects/varpart.rds")
+saveRDS(varPart,   "bulk_RNAseq/rObjects/varpart.rds")
 rm(varPart, variance_explained)
 ```
-
 
 # CCA 
 Canonical Correlation Analysis
 ```{r}
-form <- ~ condition_dose  + duration_min + age_days + end_heart_rate + end_temp
+form <- ~ condition  + duration_min + age_days + end_heart_rate + end_temp + end_SpO2 + RIN 
 # Compute Canonical Correlation Analysis (CCA) # between all pairs of variables
 # returns absolute correlation value
 C = canCorPairs(form, info)
 # Plot correlation matrix
 plotCorrMatrix( C )
-saveToPDF("../results/variance/CCA_with_project.pdf", width = 8, height = 8)
+saveToPDF("bulk_RNAseq/results/variance/CCA_with_project.pdf", width = 8, height = 8)
 
 rm(form, C)
 ```
@@ -519,7 +488,7 @@ vfit <- contrasts.fit(fit, contrasts = contrasts)
 # The logCPM values can then be used in any standard limma pipeline, using the trend=TRUE
 veBayesFit <- eBayes(vfit, trend = TRUE, robust=TRUE)
 plotSA(veBayesFit, main = "Final Model: Mean-variance Trend")
-saveToPDF("../results/voom/voom.eBayes.finalmodel.pdf", width = 9, height = 5)
+saveToPDF("bulk_RNAseq/results/voom/voom.eBayes.finalmodel.pdf", width = 9, height = 5)
 
 rm(design, fit, coef.fit, contrasts, vfit)
 ```
@@ -539,24 +508,9 @@ sumTable <-
 
 print(paste0(" q < ", qval, " & absolute log2-fold change > ", lfc.cutoff))
 sumTable
-#write.table(sumTable, paste0("../results/DEGs/DEGs_summary_q0.05_log2FC1.txt"), quote = FALSE, sep = "\t")
+
 genes_relevant <- dge.filtered.norm$genes
-
 rm(sumTable)
-```
-
-# DGE Check 
-```{r DGE_check, eval=FALSE}
-DGE_test <- topTable(
-  veBayesFit, 
-  coef = "Ecoli_vs_Saline",  
-  n = Inf, 
-  p.value = 1,
-  lfc = 0, 
-  sort.by = "P", 
-  genelist = dge.filtered.norm$genes, 
-  confint = TRUE # column of confidence interval 
-    )
 ```
 
 # Output DEG tables
@@ -575,8 +529,8 @@ for (i in allComparisons) {
     confint = TRUE # column of confidence interval 
     )
     saveRDS(vTopTableAll, file = 
-            paste0("../rObjects/gene_tables/", i,"_gene_table.rds"))
-  path <- paste0("../results/DEGs/", i, "_q1.00.txt", sep = "") 
+            paste0("bulk_RNAseq/rObjects/gene_tables/", i,"_gene_table.rds"))
+  path <- paste0("bulk_RNAseq/results/DEGs/", i, "_q1.00.txt", sep = "") 
   write.table(vTopTableAll, path, sep = "\t", row.names = FALSE, quote = FALSE)
   
   # p < 0.05, log2fc > 1
@@ -589,7 +543,7 @@ for (i in allComparisons) {
       lfc = lfc.cutoff,
       genelist = genes_relevant, 
       confint = TRUE)
-  path <- paste0("../results/DEGs/", i, "_q0.05_lfc1.txt", sep = "") 
+  path <- paste0("bulk_RNAseq/results/DEGs/", i, "_q0.05_lfc1.txt", sep = "") 
   write.table(vTopTableSig, path, sep = "\t", row.names = FALSE, quote = FALSE)
   # increment 
   coef <- coef + 1
@@ -644,23 +598,22 @@ pca_plot
 ggplot(data = pcaWithMetadata, aes(x = PC1, y = PC2, shape = group, color = group)) +
   geom_point(size = 2.5) +
   theme_bw() 
-saveToPDF("../results/PCA/PCA_dim1&2.pdf", width = 6, height = 6)
+saveToPDF("bulk_RNAseq/results/PCA/PCA_dim1&2.pdf", width = 6, height = 6)
 
 ggplot(data = pcaWithMetadata, aes(x = PC2, y = PC3, shape = group, color = group)) +
   geom_point(size = 2.5) +
   theme_bw() 
-saveToPDF("../results/PCA/PCA_dim2&3.pdf", width = 6, height = 6)
+saveToPDF("bulk_RNAseq/results/PCA/PCA_dim2&3.pdf", width = 6, height = 6)
 
-write.table(pcaWithMetadata, "../results/PCA/PCA_metadata.txt", quote = FALSE, sep = "\t")
+write.table(pcaWithMetadata, "bulk_RNAseq/results/PCA/PCA_metadata.txt", quote = FALSE, sep = "\t")
 ```
 
 # CCA with PC1-10 & variables in model 
 ```{r CCA_PCA}
-form_PCA <- ~ condition + duration_min + age_days + end_heart_rate + end_temp + 
-  PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 
+form_PCA <- ~ condition + duration_min + age_days + end_heart_rate + end_temp + end_SpO2 + RIN + PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8 
 C = canCorPairs(form_PCA, pcaWithMetadata) 
 plotCorrMatrix( C ) 
-saveToPDF("../results/variance/CCA_with_PCA.pdf", width = 4, height = 4)
+saveToPDF("bulk_RNAseq/results/variance/CCA_with_PCA.pdf", width = 4, height = 4)
 
 rm(dim1_10, highly_variable_exp, pcaWithMetadata, pca_exp, voomCounts, cv2, means, ntop, path, select, Pvars, C, form_PCA)
 ```
@@ -669,7 +622,7 @@ rm(dim1_10, highly_variable_exp, pcaWithMetadata, pca_exp, voomCounts, cv2, mean
 ```{r volcano, warning=FALSE}
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/", i,"_q1.00.txt"))
+    read.delim(paste0("bulk_RNAseq/results/DEGs/", i,"_q1.00.txt"))
     i <- gsub("_", " ", i)
     if (!any(group1_vs_group2$adj.P.Val < 0.05, na.rm = TRUE)) {
     # If there are no significant DEGs, create a volcano plot with all points in gray
@@ -691,7 +644,7 @@ for (i in allComparisons) {
            y = expression(-log[10] ~ "(" ~ italic("p") ~ "-value)")) +
       ggtitle(paste0(i, "\nNo significant DEGs found"))
     i <- gsub(" ", "_", i)
-    pdf(paste0("../results/volcano/", i, ".pdf"), height = 6, width = 6)
+    pdf(paste0("bulk_RNAseq/results/volcano/", i, ".pdf"), height = 6, width = 6)
     print(p)
     dev.off()
   } else {
@@ -821,7 +774,7 @@ for (i in allComparisons) {
     p
     i <- gsub(" ", "_", i)
     # save
-    path <-paste0("../results/volcano/",i)
+    path <-paste0("bulk_RNAseq/results/volcano/",i)
     pdf(paste0(path, ".pdf"),
         height = 6,
         width = 6)
@@ -836,14 +789,14 @@ for (i in allComparisons) {
 
 ```{r cleanup}
 # clean up
-remove(up, up10, upFold, group1_vs_group2, downFold, down10, data, p, my_colors)
+remove(up, up10, upFold, group1_vs_group2, downFold, down10, data, p, my_colors, color_value, data$w.local)
 ```
 
 # Make excel table
 ```{r excel}
 # first read in the files
 for (i in allComparisons) {
-  filepath <- paste0("../results/DEGs/", i,"_q1.00.txt")
+  filepath <- paste0("bulk_RNAseq/results/DEGs/", i,"_q1.00.txt")
   assign(paste0(i),
          read.delim(filepath, header = TRUE, sep = "\t",stringsAsFactors = FALSE))
 }
@@ -851,35 +804,20 @@ for (i in allComparisons) {
 allComparisons
 list_of_datasets <- list(
   "Ecoli_vs_Saline" = Ecoli_vs_Saline)
-write.xlsx(list_of_datasets, file = "../results/DEGs/DEGs.q1.00.xlsx")
+write.xlsx(list_of_datasets, file = "bulk_RNAseq/results/DEGs/DEGs.q1.00.xlsx")
 
 library("readxl")
-DEGs <- read_excel("../results/DEGs/DEGs.q1.00.xlsx")
+DEGs <- read_excel("bulk_RNAseq/results/DEGs/DEGs.q1.00.xlsx")
 SIG_DEGs <- subset(DEGs, (adj.P.Val < 0.05 & logFC > 1) | (adj.P.Val < 0.05 & logFC < -1))
-write.table(SIG_DEGs, file = "../results/DEGs/Ecoli_vs_Saline_q0.05_lfc1.txt", sep = "\t", quote = FALSE, row.names = FALSE)
-```
-
-```{r}
-rownames(veBayesFit$p.value) <- dge.filtered.norm$genes$gene_name
-rownames(veBayesFit$coefficients) <- dge.filtered.norm$genes$gene_name
-rownames(veBayesFit$stdev.unscaled) <- dge.filtered.norm$genes$gene_name
-#rownames(veBayesFit$cov.coefficients) <- dge.filtered.norm$genes$gene_name
-rownames(veBayesFit$t) <- dge.filtered.norm$genes$gene_name
-rownames(veBayesFit$lods) <- dge.filtered.norm$genes$gene_name
-
-
-glimmaVolcano(veBayesFit, dge = dge.filtered.norm, groups = dge.filtered.norm$samples$group)
-
-
-#sessionInfo()
+write.table(SIG_DEGs, file = "bulk_RNAseq/results/DEGs/Ecoli_vs_Saline_q0.05_lfc1.txt", sep = "\t", quote = FALSE, row.names = FALSE)
 ```
 
 # Supplemental Figure - PCA, CCA, variance, 
-```{r supplementalFig4_combined}
+```{r supplemental_combined}
 row1 <-
   ggarrange(
     pca_plot,
-    print(cca_plot),
+    NULL,
     ncol = 2,
   widths = c(1, 1.25), 
   labels = c("A","B"), 
@@ -893,14 +831,30 @@ row2 <-
     font.label = list(size = 10)
     )
 
-supplementalFigure4 <-
+supplementalFigure <-
   ggarrange(
     row1,
     row2,
     nrow = 2,
     heights = c(1.45, 1)
     )
-supplementalFigure4
-path <- paste0("../results/manuscript_figures/Supplemental_figure_2_bulkRNA_variance")
+supplementalFigure
+path <- paste0("bulk_RNAseq/results/manuscript_figures/Supplemental_figure_2_bulkRNA_variance")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
+```
+
+# Create interactive Glimma output
+```{r glimma_output}
+rownames(veBayesFit$p.value) <- dge.filtered.norm$genes$gene_name
+rownames(veBayesFit$coefficients) <- dge.filtered.norm$genes$gene_name
+rownames(veBayesFit$stdev.unscaled) <- dge.filtered.norm$genes$gene_name
+rownames(veBayesFit$t) <- dge.filtered.norm$genes$gene_name
+rownames(veBayesFit$lods) <- dge.filtered.norm$genes$gene_name
+
+glimmaVolcano(veBayesFit, dge = dge.filtered.norm, groups = dge.filtered.norm$samples$group)
+```
+
+# Session information
+```{r}
+sessionInfo()
 ```

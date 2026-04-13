@@ -22,7 +22,7 @@ with open('sampleReadGroupInfo.txt', 'r') as infile:
 # create header and write to outfile
 header = '''{{
     "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
-    "rawReads" : "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/",
+    "rawReads" : "../../projects/sepsis/pig/Ecoli/bulkRNA/",
     "rawQC" : "../rawQC/",
     "trimmedReads" : "../trimmedReads/",
     "trimmedQC" : "../trimmedQC/",
@@ -32,12 +32,12 @@ header = '''{{
 
 
     "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
-    "Sscrofa.Ymasked.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel.Ymask_2024",
-    "Scrofa.cdna.Ymasked.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask",
-    "Sscrofa.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sscrofa11.1.dna.toplevel",
-    "Sscrofa.gtf" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.107",
-    "star_ref_index" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask",
-    "kallisto_ref_index" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.kallisto",
+    "Sscrofa.Ymasked.fa" : "../../projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel.Ymask_2024",
+    "Scrofa.cdna.Ymasked.fa" : "../../projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask",
+    "Sscrofa.fa" : "../../projects/references/pig/ensembl_v7/Sscrofa11.1.dna.toplevel",
+    "Sscrofa.gtf" : "../../projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.107",
+    "star_ref_index" : "../../projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask",
+    "kallisto_ref_index" : "../../projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.kallisto",
 
     "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
     "sample_names": {0},
@@ -86,7 +86,7 @@ with open('sampleReadGroupInfo.txt', 'r') as infile:
 
         out = '''
     "{0}":{{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "{1}",
         "fq2": "{2}",
         "fq3": "{3}",

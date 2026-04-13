@@ -1,0 +1,9 @@
+"pig_id"	"sample"	"condition"	"group"	"tissue"	"flowcell"	"lane"	"dose_ml_per_hr"	"weight_kg"	"age_days"	"duration_min"	"start_heart_rate"	"end_heart_rate"	"start_temp"	"end_temp"	"simplified_name"	"sex"	"path"	"counts_name"	"RIN"	"sample_ID"	"start_SpO2"	"end_SpO2"	"start_MAP"	"end_MAP"
+"1"	"E1"	"E1"	"High_dose_Ecoli"	"Ecoli"	"Brain"	"HVC2VDRXY"	1	"1.2x10^9"	78	137	362	90	166	96.9	100	"E1.HighEcoli"	"female"	"bulk_RNAseq/starAligned/"	"E1_BR"	7.4	"E1_1_BR"	99	96	60	71
+"2"	"E4"	"E4"	"High_dose_Ecoli"	"Ecoli"	"Brain"	"HVC2VDRXY"	1	"1.2x10^9"	86	133	360	103	196	101.5	104.7	"E4.HighEcoli"	"female"	"bulk_RNAseq/starAligned/"	"E4_BR"	7.7	"E4_1_BR"	96	93	77	71
+"3"	"E6"	"E6"	"High_dose_Ecoli"	"Ecoli"	"Brain"	"HVC2VDRXY"	1	"1.2x10^9"	79.2	140	199	91	189	99.5	99.8	"E6.HighEcoli"	"female"	"bulk_RNAseq/starAligned/"	"E6_BR"	8.4	"E6_1_BR"	98	93	98	56
+"4"	"E8"	"E8"	"High_dose_Ecoli"	"Ecoli"	"Brain"	"HVC2VDRXY"	1	"1.2x10^9"	79.3	147	301	93	271	103.4	110.8	"E8.HighEcoli"	"female"	"bulk_RNAseq/starAligned/"	"E8_BR"	6.8	"E8_1_BR"	97	98	79	49
+"5"	"S1"	"S1"	"Saline"	"Saline"	"Brain"	"HVC2VDRXY"	1	"1"	81.8	143	300	78	85	98.4	96.9	"S1.Saline"	"female"	"bulk_RNAseq/starAligned/"	"S1_BR"	7.6	"S1_1_BR"	99	99	102	63
+"6"	"S2"	"S2"	"Saline"	"Saline"	"Brain"	"HVC2VDRXY"	1	"1"	78.2	139	300	84	81	96.9	96	"S2.Saline"	"female"	"bulk_RNAseq/starAligned/"	"S2_BR"	7.4	"S2_1_BR"	99	99	98	62
+"7"	"S3"	"S3"	"Saline"	"Saline"	"Brain"	"HVC2VDRXY"	1	"1"	74.4	136	300	121	107	98.2	97.3	"S3.Saline"	"female"	"bulk_RNAseq/starAligned/"	"S3_BR"	7.7	"S3_1_BR"	99	100	63	62
+"8"	"S6"	"S6"	"Saline"	"Saline"	"Brain"	"HVC2VDRXY"	1	"1"	79.3	144	300	98	146	99.6	99.8	"S6.Saline"	"female"	"bulk_RNAseq/starAligned/"	"S6_BR"	7.5	"S6_1_BR"	98	99	86	67

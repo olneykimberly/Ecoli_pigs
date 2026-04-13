@@ -11,19 +11,10 @@ Compare Ecoli vs Saline
 # Set up working enivornment
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = ".")
-getwd()
-
-library(ggplot2)
-library(ggpubr)
-library(purrr)
-library(car)
-library(reshape)
-library(ggforce)
-library("knitr")
 ```
 
 ```{r libraries, message=FALSE, warning=FALSE}
-source("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/file_paths_and_colours.R")
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 ```
 
 # Test for differences between the two groups (contorls and Ecoli) for continuous variables
@@ -130,7 +121,7 @@ for (i in 1:length(variable_names)) {
 # Output clinical stats table
 ```{r}
 write.table(clinical_stats,
-            "../results/clinical_stats/clinincal_stats.tsv",
+            "bulk_RNAseq/results/clinical_stats/clinincal_stats.tsv",
             quote = FALSE,
             sep = "\t")
 ```
@@ -308,7 +299,6 @@ row1 <-
   )
 
 row1
-path <- paste0("../results/manuscript_figures/Supplemental_Figure_",
-               "clinical_stats")
+path <- paste0("bulk_RNAseq/results/manuscript_figures/Supplemental_Figure_1_clinical_stats")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 ```

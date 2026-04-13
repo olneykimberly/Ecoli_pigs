@@ -6,15 +6,14 @@
 #SBATCH -n 10 # threaded 
 #SBATCH -o slurm.Ecoli.out
 #SBATCH -e slurm.Ecoli.err
-#SBATCH --mail-user=olney.kimberly@mayo.edu
 
 # activate conda environment
 source $HOME/.bash_profile
 module load python
-conda activate chemobrain
+conda activate Ecoli_pigs
 
-# change directory to where Snakefile is located
-CWD="/tgen_labs/jfryer/kolney/chemobrain/scripts/"
+# change directory to where the bulk RNAseq Snakefile is located
+CWD="scripts/"
 cd $CWD
 
 # run snakemake

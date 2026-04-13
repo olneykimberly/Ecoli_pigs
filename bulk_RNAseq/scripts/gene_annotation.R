@@ -23,7 +23,7 @@ protein_coding_genes <- protein_coding_genes %>% mutate(gene_name = coalesce(gen
 # saveRDS(protein_coding_genes$gene_name, file = paste0("../rObjects/gene_options.rds"))
 write.table(
   protein_coding_genes,
-  "/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/rObjects/v7_ensembl_protein_coding_genes_v2.txt",
+  "bulk_RNAseq/v7_ensembl_protein_coding_genes.txt",
   sep = "\t",
   row.names = FALSE,
   quote = FALSE

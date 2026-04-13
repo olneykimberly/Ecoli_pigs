@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# change directory
-cd /research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/
+# change directory to where the raw bulk RNAseq files are located.
+# For us, that is in our shared projects folder 
+cd ../../projects/sepsis/pig/Ecoli/bulkRNA/
 
 # create file with list of R1 samples
 ls -1 | grep L1_R1_ > L1R1Samples.txt
@@ -15,10 +16,10 @@ for sample in `cat L1R1Samples.txt`; do
 done;
 
 # mv the files 
-mv L1R1Samples.txt  /research/labs/neurology/fryer/m239830/Ecoli_pigs/bulk_RNAseq/scripts/L1R1Samples.txt
-mv sampleReadInfo.txt /research/labs/neurology/fryer/m239830/Ecoli_pigs/bulk_RNAseq/scripts/sampleReadInfo.txt
+mv L1R1Samples.txt  bulk_RNAseq/scripts/L1R1Samples.txt
+mv sampleReadInfo.txt bulk_RNAseq/scripts/sampleReadInfo.txt
 
-cd /research/labs/neurology/fryer/m239830/Ecoli_pigs/bulk_RNAseq/scripts/
+cd bulk_RNAseq/scripts/
 paste -d "\t" L1R1Samples.txt sampleReadInfo.txt > sampleReadGroupInfo.txt
 rm L1R1Samples.txt
 rm sampleReadInfo.txt
