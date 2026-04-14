@@ -3,6 +3,8 @@ Rproj.user
 .RData
 .Ruserdata
 .Rproj.user
+metadata_extra_clinical.txt
+metadata.tsv
 all_pigs_combined_metadata.tsv
 Sepsis_Pig_Transcriptome_Full_Comparison.xlsx
 bulk_RNAseq/scripts/.snakemake
