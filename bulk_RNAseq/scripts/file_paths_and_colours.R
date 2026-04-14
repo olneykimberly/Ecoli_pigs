@@ -39,6 +39,15 @@ library(ggforce)
 library(openxlsx)
 library(devtools)
 
+# Single nucleus 
+library(SeuratObject)
+library(Signac)
+library(Seurat) 
+library(harmony)
+library(SeuratWrappers)
+library(dittoSeq)
+library(DoubletFinder)
+
 #----------------- Create folder outputs
 # Create directory structure if it doesn't exist
 # This ensures that saveRDS() and saveToPDF() calls don't fail

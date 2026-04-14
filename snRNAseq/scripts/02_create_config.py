@@ -27,10 +27,10 @@ header = '''{{
     "cellbender_dir" : "../cellbender/",
     "results" : "../results/",
     "rObjects" : "../rObjects/",
-    "fastq_path" : "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+    "fastq_path" : "../fastq/",
 
     "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
-    "Sus.scrofa" : "/tgen_labs/jfryer/projects/references/pig/ensembl_v7/Sus_scrofa_star_Ymask_Cellranger_2024/",
+    "Sus.scrofa" : "../../../projects/references/pig/ensembl_v7/Sus_scrofa_star_Ymask_Cellranger_2024/",
 
     "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
     "sample_names": {0},
@@ -79,7 +79,7 @@ with open('sampleReadGroupInfo_snRNA.txt', 'r') as infile:
 
         out = '''
     "{0}":{{
-        "fq_path": "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/fastq/",
+        "fq_path": "../fastq/",
         "fq": "{1}",
         "ID": "{2}",
         "SM": "{3}",

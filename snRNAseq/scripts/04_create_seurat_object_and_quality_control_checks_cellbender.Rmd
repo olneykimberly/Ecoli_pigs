@@ -22,11 +22,9 @@ knitr::opts_knit$set(root.dir = ".")
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender"
 
-# Remove sample
-# metadata <- subset(metadata, sampleID != "P_60"  & sampleID != "B_6")
 metadata$sample_ID <- factor(metadata$sample_ID, levels = c(metadata$sample_ID))
 samples <- metadata$sample_ID 
 disease_order <- factor(metadata$group, levels = c("Ecoli", "Saline"))
@@ -35,14 +33,14 @@ sample_order <- factor(metadata$sample, levels = c(metadata$sample))
 
 # Genes 
 ```{r gene_info}
-if (file.exists("../rObjects/annotation.rds")) {
-  genes <- readRDS("../rObjects/annotation.rds")
+if (file.exists("snRNAseq/rObjects/annotation.rds")) {
+  genes <- readRDS("snRNAseq/rObjects/annotation.rds")
 } else {
   gtf.file <- paste0(pathToRef, "Sus_scrofa_star_Ymask_Cellranger_2024/genes/genes.gtf")
   genes <- rtracklayer::import(gtf.file)
   genes <- as.data.frame(genes)
   genes <- genes[genes$type == "gene",]
-  saveRDS(genes, "../rObjects/annotation.rds")
+  saveRDS(genes, "snRNAseq/rObjects/annotation.rds")
 }
 gene.names <- genes$gene_name
 mt.genes.df <- subset(genes, seqnames == "MT")
@@ -56,7 +54,7 @@ nCount_RNA = total number of transcripts (UMIs) in a single cell
 nFeature_RNA = number of unique genes (features)
 ```{r QC_metrics}
 nCount.min <- 500 
-nCount.max <- 150000  # 245982 
+nCount.max <- 150000  # max is 245982 
 nFeature.min <- 100
 nFeature.max<- 12000
 complexity.cutoff <- 0.80
@@ -68,11 +66,11 @@ choroid.cutoff <- 1
 
 # Setup seurat object
 ```{r seurat_object}
-prefix <- "../cellbender/"
+prefix <- "snRNAseq/cellbender/"
 suffix <- "_filtered_seurat.h5"
 
-if (file.exists(paste0("../rObjects/", projectID, ".rds"))) {
-  dataObject <- readRDS(paste0("../rObjects/", projectID, ".rds"))
+if (file.exists(paste0("snRNAseq/rObjects/", projectID, ".rds"))) {
+  dataObject <- readRDS(paste0("snRNAseq/rObjects/", projectID, ".rds"))
 } else {
   for (i in samples) {
     print(i)
@@ -84,7 +82,7 @@ if (file.exists(paste0("../rObjects/", projectID, ".rds"))) {
                  y = c(E4_1_BR, E6_1_BR, E8_1_BR, S1_1_BR, S2_1_BR, S3_1_BR, S6_1_BR),
                  add.cell.ids = samples, 
                  project = "Pigs")
-    saveRDS(dataObject, paste0("../rObjects/", projectID, ".rds"))
+    saveRDS(dataObject, paste0("rObjects/", projectID, ".rds"))
 } 
 # Inspect 
 dataObject
@@ -265,13 +263,13 @@ v2
 ```{r, echo=FALSE}
 # save v1
 v1
-path <- paste0("../results/violin/",projectID,"_nFeature_nCount_complexity_raw")
+path <- paste0("results/violin/",projectID,"_nFeature_nCount_complexity_raw")
 saveToPDF(paste0(path, ".pdf"), width = 20, height = 4)
 dev.off()
 
 # save v2
 v2
-path <- paste0("../results/violin/",projectID,"_percent_raw")
+path <- paste0("results/violin/",projectID,"_percent_raw")
 saveToPDF(paste0(path, ".pdf"), width = 25, height = 4)
 dev.off()
 
@@ -301,7 +299,7 @@ s1
 ```{r echo=FALSE}
 # save
 s1
-path <- paste0("../results/scatter/",projectID,"_nFeature_vs_nCount_percentMt_raw")
+path <- paste0("results/scatter/",projectID,"_nFeature_vs_nCount_percentMt_raw")
 saveToPDF(paste0(path, ".pdf"), width = 10, height = 10)
 dev.off()
 
@@ -367,8 +365,8 @@ print(paste0(dim(counts)[1] - dim(counts.filtered)[1], " features removed"))
 
 ## Save filtering
 ```{r,echo=FALSE}
-saveRDS(dataObject.filtered, paste0("../rObjects/",projectID,"_filtered.rds"))
-#dataObject.filtered <- readRDS(paste0("../rObjects/",projectID,"_filtered.rds"))
+saveRDS(dataObject.filtered, paste0("rObjects/",projectID,"_filtered.rds"))
+#dataObject.filtered <- readRDS(paste0("rObjects/",projectID,"_filtered.rds"))
 ```
 
 
@@ -401,7 +399,7 @@ grid2 <- grid.arrange(grobs = plots2, layout_matrix = layout2)
 ```{r,echo=FALSE}
 # save
 grid2 <- grid.arrange(grobs = plots2, layout_matrix = layout2)
-path <- paste0("../results/nuclei_count/",projectID, 
+path <- paste0("results/nuclei_count/",projectID, 
                "_cells_per_sample")
 saveToPDF(paste0(path, ".pdf"), width = 20, height = 6)
 
@@ -487,7 +485,7 @@ grid3 <- grid.arrange(grobs = plots3, layout_matrix = layout3)
 ```{r, echo=FALSE}
 # save
 grid3 <- grid.arrange(grobs = plots3, layout_matrix = layout3)
-path <- paste0("../results/density/",projectID, 
+path <- paste0("results/density/",projectID, 
                "_density")
 saveToPDF(paste0(path, ".pdf"), width = 11, height = 8.5)
 
@@ -519,12 +517,12 @@ v4
 ```{r, echo=FALSE}
 # save
 v3
-path <- paste0("../results/violin/",projectID, 
+path <- paste0("results/violin/",projectID, 
                "_nFeature_nCount_complexity_filtered")
 saveToPDF(paste0(path, ".pdf"), width = 12, height = 4)
 
 v4
-path <- paste0("../results/violin/",projectID, 
+path <- paste0("results/violin/",projectID, 
                "_percent_filtered")
 saveToPDF(paste0(path, ".pdf"), width = 15, height = 4)
 
@@ -554,7 +552,7 @@ s3
 ```{r,echo=FALSE}
 # save
 s3
-path <- paste0("../results/scatter/",projectID,
+path <- paste0("results/scatter/",projectID,
                "_nFeature_vs_nCount_perecentMt_filtered")
 saveToPDF(paste0(path, ".pdf"), width = 10, height = 10)
 
@@ -584,7 +582,7 @@ b1
 ```{r,echo=FALSE}
 # save
 b1
-path <- paste0("../results/nuclei_count/",projectID,
+path <- paste0("results/nuclei_count/",projectID,
                "_nFeature_per_sample")
 saveToPDF(paste0(path, ".pdf"), width = 12, height = 4)
 
@@ -602,7 +600,7 @@ head(df, 10)
 ```
 
 ```{r,echo=FALSE}
-write.table(df, paste0("../results/top_transcripts/", projectID, "_abundant_transcripts.txt"),
+write.table(df, paste0("results/top_transcripts/", projectID, "_abundant_transcripts.txt"),
             quote = FALSE,
             row.names = FALSE)
 ```

@@ -3,7 +3,7 @@ Bulk and single nucleus RNAseq of Sus scrofa (pigs) that received either saline 
 
 The goal of this experiment is to identify differentially expressed genes (DEGs) between experimental groups.  Pigs were injected with saline (control) or Escherichia coli  (E. coli) to model sepsis.  Brain cotrex samples were collected and sent for bulk RNA and single nucleus RNA sequencing.
 
-Explore gene expresison in our published shiny apps: [single nucleus shiny app](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/) and [bulk RNAseq](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/)
+Explore gene expresison in our published shiny apps: [single nucleus](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/) and [bulk RNAseq](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/)
 
 | Sample     | Group   | 
 | -----------|:-------:|
@@ -100,6 +100,7 @@ Reference Genome: Scripts point to ../../projects/references/pig/ensembl_v7.
 
 ```
 cd /snRNAseq/scripts/
+conda activate cellbender_py38 # this contains the cellbender tool
 ```
 
 ### create config file for snakemake pipeline to align the reads and remove ambient RNA

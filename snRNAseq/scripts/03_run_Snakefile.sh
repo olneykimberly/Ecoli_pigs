@@ -21,6 +21,5 @@ conda activate cellbender_py38
 # python 02_create_config.py
 
 # 3) run snakemake - metaphlan alignment 
-#snakemake -s Snakefile -j 8 --nolock --latency-wait 15 --rerun-incomplete --cluster "sbatch --ntasks 16 --nodes 1 --mem=50G -t 36:00:00"
 snakemake -s Snakefile.v3 -j 8 --nolock --latency-wait 15 --rerun-incomplete --cluster "sbatch --partition=gpu-a100 --ntasks 1 --nodes 1 --mem=50G --gres=gpu:1 -t 8:00:00"
 

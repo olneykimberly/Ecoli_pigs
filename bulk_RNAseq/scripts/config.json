@@ -1,6 +1,6 @@
 {
     "Commment_Input_Output_Directories": "This section specifies the input and output directories for scripts",
-    "rawReads" : "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/",
+    "rawReads" : "../../../projects/sepsis/pig/Ecoli/bulkRNA/",
     "rawQC" : "../rawQC/",
     "trimmedReads" : "../trimmedReads/",
     "trimmedQC" : "../trimmedQC/",
@@ -10,18 +10,18 @@
 
 
     "Comment_Reference" : "This section specifies the location of the Sus scrofa, Ensembl reference genome",
-    "Sscrofa.Ymasked.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel.Ymask_2024",
-    "Scrofa.cdna.Ymasked.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask",
-    "Sscrofa.fa" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sscrofa11.1.dna.toplevel",
-    "Sscrofa.gtf" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.107",
-    "star_ref_index" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask_2024",
-    "kallisto_ref_index" : "/research/labs/neurology/fryer/projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.kallisto",
+    "Sscrofa.Ymasked.fa" : "../../..projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel.Ymask_2024",
+    "Scrofa.cdna.Ymasked.fa" : "../../..projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask",
+    "Sscrofa.fa" : "../../..projects/references/pig/ensembl_v7/Sscrofa11.1.dna.toplevel",
+    "Sscrofa.gtf" : "../../..projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.107",
+    "star_ref_index" : "../../..projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.dna.toplevel_star_Ymask_2024",
+    "kallisto_ref_index" : "../../..projects/references/pig/ensembl_v7/Sus_scrofa.Sscrofa11.1.cdna.all.Ymask.kallisto",
 
     "Comment_Sample_Info": "The following section lists the samples that are to be analyzed",
     "sample_names": ['E19_br', 'E19_kid', 'E1_BR', 'E1_KID', 'E20_br', 'E20_kid', 'E21_br', 'E21_kid', 'E22_br', 'E22_kid', 'E23_br', 'E23_kid', 'E24_br', 'E24_kid', 'E2_BR', 'E2_KID', 'E3_BR', 'E3_KID', 'E4_BR', 'E4_KID', 'E5_BR', 'E5_KID', 'E6_BR', 'E6_KID', 'E7_BR', 'E7_KID', 'E8_BR', 'E8_KID', 'S1_BR', 'S1_KID', 'S1_br', 'S1_kid', 'S2_BR', 'S2_KID', 'S2_br', 'S2_kid', 'S3_BR', 'S3_KID', 'S3_br', 'S3_kid', 'S4_BR', 'S4_KID', 'S4_br', 'S4_kid', 'S5_BR', 'S5_KID', 'S5_br', 'S5_kid', 'S6_BR', 'S6_KID', 'S6_br', 'S6_kid'],
 
     "E19_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E19_br.FCHHKHJDRXY_L1_R1_ITACCGAGG-CCTGAACT",
         "fq2": "E19_br.FCHHKHJDRXY_L1_R2_ITACCGAGG-CCTGAACT",
         "fq3": "E19_br.FCHHKHJDRXY_L2_R1_ITACCGAGG-CCTGAACT",
@@ -36,7 +36,7 @@
         },
 
     "E19_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E19_kid.FCHHKHJDRXY_L1_R1_ICGTTAGAA-TTCAGGTC",
         "fq2": "E19_kid.FCHHKHJDRXY_L1_R2_ICGTTAGAA-TTCAGGTC",
         "fq3": "E19_kid.FCHHKHJDRXY_L2_R1_ICGTTAGAA-TTCAGGTC",
@@ -51,7 +51,7 @@
         },
 
     "E1_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E1_BR.FCHVC2VDRXY_L1_R1_ITAAGTGGT-CTTAAGCC",
         "fq2": "E1_BR.FCHVC2VDRXY_L1_R2_ITAAGTGGT-CTTAAGCC",
         "fq3": "E1_BR.FCHVC2VDRXY_L2_R1_ITAAGTGGT-CTTAAGCC",
@@ -66,7 +66,7 @@
         },
 
     "E1_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E1_KID.FCHVC2VDRXY_L1_R1_ICGGACAAC-TCCGGATT",
         "fq2": "E1_KID.FCHVC2VDRXY_L1_R2_ICGGACAAC-TCCGGATT",
         "fq3": "E1_KID.FCHVC2VDRXY_L2_R1_ICGGACAAC-TCCGGATT",
@@ -81,7 +81,7 @@
         },
 
     "E20_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E20_br.FCHHKHJDRXY_L1_R1_IAGCCTCAT-AGTAGAGA",
         "fq2": "E20_br.FCHHKHJDRXY_L1_R2_IAGCCTCAT-AGTAGAGA",
         "fq3": "E20_br.FCHHKHJDRXY_L2_R1_IAGCCTCAT-AGTAGAGA",
@@ -96,7 +96,7 @@
         },
 
     "E20_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E20_kid.FCHHKHJDRXY_L1_R1_IGATTCTGC-GACGAGAG",
         "fq2": "E20_kid.FCHHKHJDRXY_L1_R2_IGATTCTGC-GACGAGAG",
         "fq3": "E20_kid.FCHHKHJDRXY_L2_R1_IGATTCTGC-GACGAGAG",
@@ -111,7 +111,7 @@
         },
 
     "E21_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E21_br.FCHHKHJDRXY_L1_R1_ITCGTAGTG-AGACTTGG",
         "fq2": "E21_br.FCHHKHJDRXY_L1_R2_ITCGTAGTG-AGACTTGG",
         "fq3": "E21_br.FCHHKHJDRXY_L2_R1_ITCGTAGTG-AGACTTGG",
@@ -126,7 +126,7 @@
         },
 
     "E21_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E21_kid.FCHHKHJDRXY_L1_R1_ICTACGACA-GAGTCCAA",
         "fq2": "E21_kid.FCHHKHJDRXY_L1_R2_ICTACGACA-GAGTCCAA",
         "fq3": "E21_kid.FCHHKHJDRXY_L2_R1_ICTACGACA-GAGTCCAA",
@@ -141,7 +141,7 @@
         },
 
     "E22_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E22_br.FCHHKHJDRXY_L1_R1_ITAAGTGGT-CTTAAGCC",
         "fq2": "E22_br.FCHHKHJDRXY_L1_R2_ITAAGTGGT-CTTAAGCC",
         "fq3": "E22_br.FCHHKHJDRXY_L2_R1_ITAAGTGGT-CTTAAGCC",
@@ -156,7 +156,7 @@
         },
 
     "E22_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E22_kid.FCHHKHJDRXY_L1_R1_ICGGACAAC-TCCGGATT",
         "fq2": "E22_kid.FCHHKHJDRXY_L1_R2_ICGGACAAC-TCCGGATT",
         "fq3": "E22_kid.FCHHKHJDRXY_L2_R1_ICGGACAAC-TCCGGATT",
@@ -171,7 +171,7 @@
         },
 
     "E23_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E23_br.FCHHKHJDRXY_L1_R1_IATATGGAT-CTGTATTA",
         "fq2": "E23_br.FCHHKHJDRXY_L1_R2_IATATGGAT-CTGTATTA",
         "fq3": "E23_br.FCHHKHJDRXY_L2_R1_IATATGGAT-CTGTATTA",
@@ -186,7 +186,7 @@
         },
 
     "E23_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E23_kid.FCHHKHJDRXY_L1_R1_IGCGCAAGC-TCACGCCG",
         "fq2": "E23_kid.FCHHKHJDRXY_L1_R2_IGCGCAAGC-TCACGCCG",
         "fq3": "E23_kid.FCHHKHJDRXY_L2_R1_IGCGCAAGC-TCACGCCG",
@@ -201,7 +201,7 @@
         },
 
     "E24_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E24_br.FCHHKHJDRXY_L1_R1_IAAGATACT-ACTTACAT",
         "fq2": "E24_br.FCHHKHJDRXY_L1_R2_IAAGATACT-ACTTACAT",
         "fq3": "E24_br.FCHHKHJDRXY_L2_R1_IAAGATACT-ACTTACAT",
@@ -216,7 +216,7 @@
         },
 
     "E24_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E24_kid.FCHHKHJDRXY_L1_R1_IGGAGCGTC-GTCCGTGC",
         "fq2": "E24_kid.FCHHKHJDRXY_L1_R2_IGGAGCGTC-GTCCGTGC",
         "fq3": "E24_kid.FCHHKHJDRXY_L2_R1_IGGAGCGTC-GTCCGTGC",
@@ -231,7 +231,7 @@
         },
 
     "E2_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E2_BR.FCHVC2VDRXY_L1_R1_IATATGGAT-CTGTATTA",
         "fq2": "E2_BR.FCHVC2VDRXY_L1_R2_IATATGGAT-CTGTATTA",
         "fq3": "E2_BR.FCHVC2VDRXY_L2_R1_IATATGGAT-CTGTATTA",
@@ -246,7 +246,7 @@
         },
 
     "E2_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E2_KID.FCHVC2VDRXY_L1_R1_IGCGCAAGC-TCACGCCG",
         "fq2": "E2_KID.FCHVC2VDRXY_L1_R2_IGCGCAAGC-TCACGCCG",
         "fq3": "E2_KID.FCHVC2VDRXY_L2_R1_IGCGCAAGC-TCACGCCG",
@@ -261,7 +261,7 @@
         },
 
     "E3_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E3_BR.FCHVC2VDRXY_L1_R1_IAAGATACT-ACTTACAT",
         "fq2": "E3_BR.FCHVC2VDRXY_L1_R2_IAAGATACT-ACTTACAT",
         "fq3": "E3_BR.FCHVC2VDRXY_L2_R1_IAAGATACT-ACTTACAT",
@@ -276,7 +276,7 @@
         },
 
     "E3_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E3_KID.FCHVC2VDRXY_L1_R1_IGGAGCGTC-GTCCGTGC",
         "fq2": "E3_KID.FCHVC2VDRXY_L1_R2_IGGAGCGTC-GTCCGTGC",
         "fq3": "E3_KID.FCHVC2VDRXY_L2_R1_IGGAGCGTC-GTCCGTGC",
@@ -291,7 +291,7 @@
         },
 
     "E4_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E4_BR.FCHVC2VDRXY_L1_R1_IATGGCATG-AAGGTACC",
         "fq2": "E4_BR.FCHVC2VDRXY_L1_R2_IATGGCATG-AAGGTACC",
         "fq3": "E4_BR.FCHVC2VDRXY_L2_R1_IATGGCATG-AAGGTACC",
@@ -306,7 +306,7 @@
         },
 
     "E4_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E4_KID.FCHVC2VDRXY_L1_R1_IGCAATGCA-GGAACGTT",
         "fq2": "E4_KID.FCHVC2VDRXY_L1_R2_IGCAATGCA-GGAACGTT",
         "fq3": "E4_KID.FCHVC2VDRXY_L2_R1_IGCAATGCA-GGAACGTT",
@@ -321,7 +321,7 @@
         },
 
     "E5_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E5_BR.FCHVC2VDRXY_L1_R1_IGTTCCAAT-AATTCTGC",
         "fq2": "E5_BR.FCHVC2VDRXY_L1_R2_IGTTCCAAT-AATTCTGC",
         "fq3": "E5_BR.FCHVC2VDRXY_L2_R1_IGTTCCAAT-AATTCTGC",
@@ -336,7 +336,7 @@
         },
 
     "E5_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E5_KID.FCHVC2VDRXY_L1_R1_IACCTTGGC-GGCCTCAT",
         "fq2": "E5_KID.FCHVC2VDRXY_L1_R2_IACCTTGGC-GGCCTCAT",
         "fq3": "E5_KID.FCHVC2VDRXY_L2_R1_IACCTTGGC-GGCCTCAT",
@@ -351,7 +351,7 @@
         },
 
     "E6_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E6_BR.FCHVC2VDRXY_L1_R1_IATATCTCG-ATCTTAGT",
         "fq2": "E6_BR.FCHVC2VDRXY_L1_R2_IATATCTCG-ATCTTAGT",
         "fq3": "E6_BR.FCHVC2VDRXY_L2_R1_IATATCTCG-ATCTTAGT",
@@ -366,7 +366,7 @@
         },
 
     "E6_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E6_KID.FCHVC2VDRXY_L1_R1_IGCGCTCTA-GCTCCGAC",
         "fq2": "E6_KID.FCHVC2VDRXY_L1_R2_IGCGCTCTA-GCTCCGAC",
         "fq3": "E6_KID.FCHVC2VDRXY_L2_R1_IGCGCTCTA-GCTCCGAC",
@@ -381,7 +381,7 @@
         },
 
     "E7_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E7_BR.FCHVC2VDRXY_L1_R1_IAACAGGTT-ATACCAAG",
         "fq2": "E7_BR.FCHVC2VDRXY_L1_R2_IAACAGGTT-ATACCAAG",
         "fq3": "E7_BR.FCHVC2VDRXY_L2_R1_IAACAGGTT-ATACCAAG",
@@ -396,7 +396,7 @@
         },
 
     "E7_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E7_KID.FCHVC2VDRXY_L1_R1_IGGTGAACC-GCGTTGGA",
         "fq2": "E7_KID.FCHVC2VDRXY_L1_R2_IGGTGAACC-GCGTTGGA",
         "fq3": "E7_KID.FCHVC2VDRXY_L2_R1_IGGTGAACC-GCGTTGGA",
@@ -411,7 +411,7 @@
         },
 
     "E8_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E8_BR.FCHVC2VDRXY_L1_R1_ICAACAATG-CTTCACGG",
         "fq2": "E8_BR.FCHVC2VDRXY_L1_R2_ICAACAATG-CTTCACGG",
         "fq3": "E8_BR.FCHVC2VDRXY_L2_R1_ICAACAATG-CTTCACGG",
@@ -426,7 +426,7 @@
         },
 
     "E8_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "E8_KID.FCHVC2VDRXY_L1_R1_ITGGTGGCA-TCCTGTAA",
         "fq2": "E8_KID.FCHVC2VDRXY_L1_R2_ITGGTGGCA-TCCTGTAA",
         "fq3": "E8_KID.FCHVC2VDRXY_L2_R1_ITGGTGGCA-TCCTGTAA",
@@ -441,7 +441,7 @@
         },
 
     "S1_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S1_BR.FCHVC2VDRXY_L1_R1_ICTTGGTAT-CCAAGTCC",
         "fq2": "S1_BR.FCHVC2VDRXY_L1_R2_ICTTGGTAT-CCAAGTCC",
         "fq3": "S1_BR.FCHVC2VDRXY_L2_R1_ICTTGGTAT-CCAAGTCC",
@@ -456,7 +456,7 @@
         },
 
     "S1_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S1_KID.FCHVC2VDRXY_L1_R1_ITCCAACGC-TTGGACTT",
         "fq2": "S1_KID.FCHVC2VDRXY_L1_R2_ITCCAACGC-TTGGACTT",
         "fq3": "S1_KID.FCHVC2VDRXY_L2_R1_ITCCAACGC-TTGGACTT",
@@ -471,7 +471,7 @@
         },
 
     "S1_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S1_br.FCHHKHJDRXY_L1_R1_IATGGCATG-AAGGTACC",
         "fq2": "S1_br.FCHHKHJDRXY_L1_R2_IATGGCATG-AAGGTACC",
         "fq3": "S1_br.FCHHKHJDRXY_L2_R1_IATGGCATG-AAGGTACC",
@@ -486,7 +486,7 @@
         },
 
     "S1_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S1_kid.FCHHKHJDRXY_L1_R1_IGCAATGCA-GGAACGTT",
         "fq2": "S1_kid.FCHHKHJDRXY_L1_R2_IGCAATGCA-GGAACGTT",
         "fq3": "S1_kid.FCHHKHJDRXY_L2_R1_IGCAATGCA-GGAACGTT",
@@ -501,7 +501,7 @@
         },
 
     "S2_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S2_BR.FCHVC2VDRXY_L1_R1_ICCGTGAAG-CAGTGGAT",
         "fq2": "S2_BR.FCHVC2VDRXY_L1_R2_ICCGTGAAG-CAGTGGAT",
         "fq3": "S2_BR.FCHVC2VDRXY_L2_R1_ICCGTGAAG-CAGTGGAT",
@@ -516,7 +516,7 @@
         },
 
     "S2_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S2_KID.FCHVC2VDRXY_L1_R1_ITTACAGGA-TGACAAGC",
         "fq2": "S2_KID.FCHVC2VDRXY_L1_R2_ITTACAGGA-TGACAAGC",
         "fq3": "S2_KID.FCHVC2VDRXY_L2_R1_ITTACAGGA-TGACAAGC",
@@ -531,7 +531,7 @@
         },
 
     "S2_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S2_br.FCHHKHJDRXY_L1_R1_IGTTCCAAT-AATTCTGC",
         "fq2": "S2_br.FCHHKHJDRXY_L1_R2_IGTTCCAAT-AATTCTGC",
         "fq3": "S2_br.FCHHKHJDRXY_L2_R1_IGTTCCAAT-AATTCTGC",
@@ -546,7 +546,7 @@
         },
 
     "S2_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S2_kid.FCHHKHJDRXY_L1_R1_IACCTTGGC-GGCCTCAT",
         "fq2": "S2_kid.FCHHKHJDRXY_L1_R2_IACCTTGGC-GGCCTCAT",
         "fq3": "S2_kid.FCHHKHJDRXY_L2_R1_IACCTTGGC-GGCCTCAT",
@@ -561,7 +561,7 @@
         },
 
     "S3_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S3_BR.FCHVC2VDRXY_L1_R1_IGGCATTCT-CTAGCTTG",
         "fq2": "S3_BR.FCHVC2VDRXY_L1_R2_IGGCATTCT-CTAGCTTG",
         "fq3": "S3_BR.FCHVC2VDRXY_L2_R1_IGGCATTCT-CTAGCTTG",
@@ -576,7 +576,7 @@
         },
 
     "S3_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S3_KID.FCHVC2VDRXY_L1_R1_IAATGCCTC-TCGATCCA",
         "fq2": "S3_KID.FCHVC2VDRXY_L1_R2_IAATGCCTC-TCGATCCA",
         "fq3": "S3_KID.FCHVC2VDRXY_L2_R1_IAATGCCTC-TCGATCCA",
@@ -591,7 +591,7 @@
         },
 
     "S3_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S3_br.FCHHKHJDRXY_L1_R1_IATATCTCG-ATCTTAGT",
         "fq2": "S3_br.FCHHKHJDRXY_L1_R2_IATATCTCG-ATCTTAGT",
         "fq3": "S3_br.FCHHKHJDRXY_L2_R1_IATATCTCG-ATCTTAGT",
@@ -606,7 +606,7 @@
         },
 
     "S3_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S3_kid.FCHHKHJDRXY_L1_R1_IGCGCTCTA-GCTCCGAC",
         "fq2": "S3_kid.FCHHKHJDRXY_L1_R2_IGCGCTCTA-GCTCCGAC",
         "fq3": "S3_kid.FCHHKHJDRXY_L2_R1_IGCGCTCTA-GCTCCGAC",
@@ -621,7 +621,7 @@
         },
 
     "S4_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S4_BR.FCHVC2VDRXY_L1_R1_ITACCGAGG-CCTGAACT",
         "fq2": "S4_BR.FCHVC2VDRXY_L1_R2_ITACCGAGG-CCTGAACT",
         "fq3": "S4_BR.FCHVC2VDRXY_L2_R1_ITACCGAGG-CCTGAACT",
@@ -636,7 +636,7 @@
         },
 
     "S4_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S4_KID.FCHVC2VDRXY_L1_R1_ICGTTAGAA-TTCAGGTC",
         "fq2": "S4_KID.FCHVC2VDRXY_L1_R2_ICGTTAGAA-TTCAGGTC",
         "fq3": "S4_KID.FCHVC2VDRXY_L2_R1_ICGTTAGAA-TTCAGGTC",
@@ -651,7 +651,7 @@
         },
 
     "S4_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S4_br.FCHHKHJDRXY_L1_R1_IAACAGGTT-ATACCAAG",
         "fq2": "S4_br.FCHHKHJDRXY_L1_R2_IAACAGGTT-ATACCAAG",
         "fq3": "S4_br.FCHHKHJDRXY_L2_R1_IAACAGGTT-ATACCAAG",
@@ -666,7 +666,7 @@
         },
 
     "S4_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S4_kid.FCHHKHJDRXY_L1_R1_IGGTGAACC-GCGTTGGA",
         "fq2": "S4_kid.FCHHKHJDRXY_L1_R2_IGGTGAACC-GCGTTGGA",
         "fq3": "S4_kid.FCHHKHJDRXY_L2_R1_IGGTGAACC-GCGTTGGA",
@@ -681,7 +681,7 @@
         },
 
     "S5_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S5_BR.FCHVC2VDRXY_L1_R1_IAGCCTCAT-AGTAGAGA",
         "fq2": "S5_BR.FCHVC2VDRXY_L1_R2_IAGCCTCAT-AGTAGAGA",
         "fq3": "S5_BR.FCHVC2VDRXY_L2_R1_IAGCCTCAT-AGTAGAGA",
@@ -696,7 +696,7 @@
         },
 
     "S5_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S5_KID.FCHVC2VDRXY_L1_R1_IGATTCTGC-GACGAGAG",
         "fq2": "S5_KID.FCHVC2VDRXY_L1_R2_IGATTCTGC-GACGAGAG",
         "fq3": "S5_KID.FCHVC2VDRXY_L2_R1_IGATTCTGC-GACGAGAG",
@@ -711,7 +711,7 @@
         },
 
     "S5_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S5_br.FCHHKHJDRXY_L1_R1_ICAACAATG-CTTCACGG",
         "fq2": "S5_br.FCHHKHJDRXY_L1_R2_ICAACAATG-CTTCACGG",
         "fq3": "S5_br.FCHHKHJDRXY_L2_R1_ICAACAATG-CTTCACGG",
@@ -726,7 +726,7 @@
         },
 
     "S5_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S5_kid.FCHHKHJDRXY_L1_R1_ITGGTGGCA-TCCTGTAA",
         "fq2": "S5_kid.FCHHKHJDRXY_L1_R2_ITGGTGGCA-TCCTGTAA",
         "fq3": "S5_kid.FCHHKHJDRXY_L2_R1_ITGGTGGCA-TCCTGTAA",
@@ -741,7 +741,7 @@
         },
 
     "S6_BR":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S6_BR.FCHVC2VDRXY_L1_R1_ITCGTAGTG-AGACTTGG",
         "fq2": "S6_BR.FCHVC2VDRXY_L1_R2_ITCGTAGTG-AGACTTGG",
         "fq3": "S6_BR.FCHVC2VDRXY_L2_R1_ITCGTAGTG-AGACTTGG",
@@ -756,7 +756,7 @@
         },
 
     "S6_KID":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S6_KID.FCHVC2VDRXY_L1_R1_ICTACGACA-GAGTCCAA",
         "fq2": "S6_KID.FCHVC2VDRXY_L1_R2_ICTACGACA-GAGTCCAA",
         "fq3": "S6_KID.FCHVC2VDRXY_L2_R1_ICTACGACA-GAGTCCAA",
@@ -771,7 +771,7 @@
         },
 
     "S6_br":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S6_br.FCHHKHJDRXY_L1_R1_IAGGCAGAG-AGAATGCC",
         "fq2": "S6_br.FCHHKHJDRXY_L1_R2_IAGGCAGAG-AGAATGCC",
         "fq3": "S6_br.FCHHKHJDRXY_L2_R1_IAGGCAGAG-AGAATGCC",
@@ -786,7 +786,7 @@
         },
 
     "S6_kid":{
-        "fq_path": "/research/labs/neurology/fryer/projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
+        "fq_path": "../../..projects/sepsis/pig/Ecoli/bulkRNA/bulkRNA_mereged_lanes/",
         "fq1": "S6_kid.FCHHKHJDRXY_L1_R1_IGAATGAGA-GAGGCATT",
         "fq2": "S6_kid.FCHHKHJDRXY_L1_R2_IGAATGAGA-GAGGCATT",
         "fq3": "S6_kid.FCHHKHJDRXY_L2_R1_IGAATGAGA-GAGGCATT",
