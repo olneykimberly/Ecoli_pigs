@@ -3,6 +3,11 @@ Rproj.user
 .RData
 .Ruserdata
 .Rproj.user
+.DS_Store
+metadata.tsv
+metadata_extra_clinical.txt
+bulk_RNAseq/.DS_Store
+snRNAseq/scripts/umap_embeddings.txt
 metadata_extra_clinical.txt
 metadata.tsv
 all_pigs_combined_metadata.tsv
