@@ -6,7 +6,9 @@ Rproj.user
 .DS_Store
 metadata.tsv
 metadata_extra_clinical.txt
+manuscript_figures/*
 bulk_RNAseq/.DS_Store
+bulk_RNAseq/brain_metadata.tsv
 snRNAseq/scripts/umap_embeddings.txt
 metadata_extra_clinical.txt
 metadata.tsv
