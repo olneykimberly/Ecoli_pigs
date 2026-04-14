@@ -13,13 +13,12 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation"
 color.panel <- dittoColors()
 ```
@@ -27,7 +26,7 @@ color.panel <- dittoColors()
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/", projectID, ".rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/", projectID, ".rds"))
 # inspect
 dataObject
 ```
@@ -51,7 +50,7 @@ ncells <- ggplot(data, aes(x = Sample_ID, y = frequency, fill = Sample_ID)) +
   ggtitle("Filtered: nuclei per sample") +
   theme(legend.position =  "none") + 
   theme(axis.text.x = element_text(angle = 45, hjust=1))
-path <- paste0("../results/nuclei_count/",projectID, 
+path <- paste0("snRNAseq/results/nuclei_count/",projectID, 
                "_cells_per_sample")
 ncells
 saveToPDF(paste0(path, ".pdf"), width = 10, height = 6)
@@ -131,13 +130,13 @@ Idents(dataObject) <- dataObject$SCT_snn_res.0.5
 dataObject$seurat_clusters <- dataObject$SCT_snn_res.0.5
 
 # Save 
-saveRDS(dataObject, paste0("../rObjects/",projectID,"_SCTransform.rds"))
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_SCTransform.rds"))
+saveRDS(dataObject, paste0("snRNAseq/rObjects/",projectID,"_SCTransform.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_SCTransform.rds"))
 
 
 #----- plot UMAPS
 # group 
-pdf(paste0("../results/UMAP/unannotated/", projectID,
+pdf(paste0("snRNAseq/results/UMAP/unannotated/", projectID,
            "_SCTransform.pdf"), width = 9, height = 7)
 DimPlot(dataObject,
         group.by = "group")
@@ -168,14 +167,14 @@ dataObject.integrated$seurat_clusters <- dataObject.integrated$SCT_snn_res.0.8
 
 #----- plot UMAPS
 # group 
-pdf(paste0("../results/UMAP/unannotated/", projectID,
+pdf(paste0("snRNAseq/results/UMAP/unannotated/", projectID,
            ".pdf"), width = 9, height = 7)
 DimPlot(dataObject.integrated,
         group.by = "group")
 dev.off()
 
 # Sample ID
-pdf(paste0("../results/UMAP/unannotated/", projectID,
+pdf(paste0("snRNAseq/results/UMAP/unannotated/", projectID,
            ".pdf"), width = 9, height = 7)
 DimPlot(dataObject.integrated,
         group.by = "Sample_ID")
@@ -196,7 +195,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.integrated,
                            reduction.use = "umap",
                            do.label = TRUE,
                            labels.highlight = TRUE)
-path <- paste0("../results/UMAP/annotated/",projectID,
+path <- paste0("snRNAseq/results/UMAP/annotated/",projectID,
                "_Azimuth_FINAL")
 ditto_umap
 saveToPDF(paste0(path, ".pdf"), width = 12, height = 8)
@@ -204,5 +203,5 @@ saveToPDF(paste0(path, ".pdf"), width = 12, height = 8)
 
 # Save r object - FINAL
 ```{r save_integrated}
-saveRDS(dataObject.integrated, paste0("../rObjects/",projectID,"_FINAL.rds"))
+saveRDS(dataObject.integrated, paste0("snRNAseq/rObjects/",projectID,"_FINAL.rds"))
 ```

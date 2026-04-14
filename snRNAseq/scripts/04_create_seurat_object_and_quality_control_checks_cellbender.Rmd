@@ -1,7 +1,7 @@
 ---
 title: "10X QC processing"
 author: "Kimberly Olney, PhD"
-date: "02/17/2024"
+date: "April 2026"
 output:
   html_document:
     theme: cerulean
@@ -178,8 +178,6 @@ den1 <- ggplot(dataObject@meta.data,
   geom_density(alpha = 0.2) +
   theme_classic() +
   scale_x_log10() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("nCount_RNA") +
   ylab("Density") +
   geom_vline(xintercept = nCount.min) +
@@ -194,14 +192,10 @@ den2 <- ggplot(dataObject@meta.data,
   geom_density(alpha = 0.2) +
   theme_classic() +
   scale_x_log10() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("nFeature_RNA") +
   ylab("Density") +
   geom_vline(xintercept = nFeature.min) +
   geom_vline(xintercept = nFeature.max) + theme(legend.position="none")
-
-
 
 # Visualize cell complexity
 # Quality cells are usually above 0.85
@@ -211,8 +205,6 @@ den3 <- ggplot(dataObject@meta.data,
            fill = Sample_ID)) +
   geom_density(alpha = 0.2) +
   theme_classic() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("Cell Complexity (log10(nFeature/nCount))") +
   ylab("Density") +
   geom_vline(xintercept = complexity.cutoff) + theme(legend.position="none")
@@ -226,12 +218,8 @@ den4 <- ggplot(dataObject@meta.data,
   theme_classic() +
   scale_x_continuous(n.breaks = 4) +
   geom_vline(xintercept = mt.cutoff) +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("% Mitochondrial Genes") +
   ylab("Density")+ theme(legend.position="none")
-
-
 
 # Arrange graphs in grid
 plots1 <- list(den1,den2,den3,den4)
@@ -366,9 +354,7 @@ print(paste0(dim(counts)[1] - dim(counts.filtered)[1], " features removed"))
 ## Save filtering
 ```{r,echo=FALSE}
 saveRDS(dataObject.filtered, paste0("rObjects/",projectID,"_filtered.rds"))
-#dataObject.filtered <- readRDS(paste0("rObjects/",projectID,"_filtered.rds"))
 ```
-
 
 ## Number of cells
 ```{r number_cells2}
@@ -435,14 +421,10 @@ den6 <- ggplot(dataObject.filtered@meta.data,
   geom_density(alpha = 0.2) +
   theme_classic() +
   scale_x_log10() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("nFeature_RNA") +
   ylab("Density") +
   geom_vline(xintercept = nFeature.min) +
   geom_vline(xintercept = nFeature.max) + theme(legend.position="none")
-
-
 
 # Visualize cell complexity
 # Quality cells are usually above 0.80
@@ -453,12 +435,9 @@ den7 <- ggplot(dataObject.filtered@meta.data,
   geom_density(alpha = 0.2) +
   theme_classic() +
   scale_x_log10() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("Cell Complexity (log10(nFeature/nCount))") +
   ylab("Density") +
   geom_vline(xintercept = complexity.cutoff) + theme(legend.position="none")
-
 
 # Visualize percent.mt
 den8 <- ggplot(dataObject.filtered@meta.data,
@@ -468,13 +447,9 @@ den8 <- ggplot(dataObject.filtered@meta.data,
   geom_density(alpha = 0.2) +
   theme_classic() +
   scale_x_log10() +
-  #scale_color_manual(values = sample_colors) +
-  #scale_fill_manual(values = sample_colors) +
   xlab("% Mitochondrial Genes") +
   ylab("Density") +
   geom_vline(xintercept = mt.cutoff) + theme(legend.position="none")
-
-
 
 # Arrange graphs in grid
 plots3 <- list(den1,den2,den3,den4,den5,den6,den7,den8)

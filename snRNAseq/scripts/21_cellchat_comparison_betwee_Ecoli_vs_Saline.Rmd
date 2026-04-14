@@ -12,13 +12,12 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 library(NatParksPalettes)
@@ -34,7 +33,7 @@ use_virtualenv("cellchat_env_fixed", required = TRUE)
 #BiocManager::install("BiocNeighbors")
 #devtools::install_github("jinworks/CellChat")
 
-data.dir <- '../results/CellChat_Ecoli_vs_Saline/'
+data.dir <- 'snRNAseq/results/CellChat_Ecoli_vs_Saline/'
 dir.create(data.dir)
 
 my_seurat_theme <- function() {
@@ -71,7 +70,7 @@ message("Is the Python interpreter path pointing to your new 'cellchat_env_fixed
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 
 # inspect
 dataObject
@@ -128,7 +127,7 @@ cellchat_ecoli <- filterCommunication(cellchat_ecoli, min.cells = 10)
 cellchat_ecoli <- computeCommunProbPathway(cellchat_ecoli)
 cellchat_ecoli <- aggregateNet(cellchat_ecoli)
 cellchat_ecoli <- netAnalysis_computeCentrality(cellchat_ecoli, slot.name = "netP") 
-saveRDS(cellchat_ecoli, file = "../rObjects/cellchat_ecoli.rds")
+saveRDS(cellchat_ecoli, file = "snRNAseq/rObjects/cellchat_ecoli.rds")
 ```
 
 #### Saline
@@ -146,14 +145,14 @@ cellchat_saline <- filterCommunication(cellchat_saline, min.cells = 10)
 cellchat_saline <- computeCommunProbPathway(cellchat_saline)
 cellchat_saline <- aggregateNet(cellchat_saline)
 cellchat_saline <- netAnalysis_computeCentrality(cellchat_saline, slot.name = "netP") 
-saveRDS(cellchat_saline, file = "../rObjects/cellchat_saline.rds")
+saveRDS(cellchat_saline, file = "snRNAseq/rObjects/cellchat_saline.rds")
 ```
 
 ### Load CellChat object of each dataset and merge them together
 ```{r}
 # After you have run CellChat on each and saved them as .rds files, you can then load and merge them as per the CellChat tutorial example you provided:
-cellchat_ecoli <- readRDS("../rObjects/cellchat_ecoli.rds")
-cellchat_saline <- readRDS("../rObjects/cellchat_saline.rds")
+cellchat_ecoli <- readRDS("snRNAseq/rObjects/cellchat_ecoli.rds")
+cellchat_saline <- readRDS("snRNAseq/rObjects/cellchat_saline.rds")
 object.list <- list(Saline = cellchat_saline, Ecoli = cellchat_ecoli)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list))
 cellchat
@@ -541,11 +540,11 @@ plotGeneExpression(cellchat, signaling = "APP", split.by = "datasets", colors.gg
 
 # Save
 ```{r}
-save(object.list, file = "../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
-save(cellchat, file = "../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+save(object.list, file = "snRNAseq/rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+save(cellchat, file = "snRNAseq/rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
 
-load("../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
-load("../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+load("snRNAseq/rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+load("snRNAseq/rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
 ```
 
 # Manuscript figure
@@ -635,5 +634,4 @@ gg_final <- addSmallLegend(gg_final)
 
 print(gg_final)
 dev.off()
-
 ```

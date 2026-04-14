@@ -1,12 +1,11 @@
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+# Exploratory script. Was not used for the manuscript
+knitr::opts_knit$set(root.dir = ".")
 
-
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 
 # Is PLP1 expression showing up slightly in all cell types, primarily driven by sample S1?
 library(patchwork)
@@ -211,12 +210,12 @@ ditto_umap <- dittoDimPlot(object = dataObject.endothelial,
 ditto_umap
 ## ----DE-------------------------------------------------------------------------------------------------------
 
-gene_info <- read.delim("../rObjects/v7_ensembl_protein_coding_genes.txt")
+gene_info <- read.delim("snRNAseq/rObjects/v7_ensembl_protein_coding_genes.txt")
 protein_coding_genes <- subset(gene_info, gene_biotype == "protein_coding")
 
 info <- (dataObject@meta.data)
 
-output_dir <- "../results/DEGs/DESeq2_pseudobulk_exp_filter"
+output_dir <- "snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter"
 # List of cell types to analyze
 # Pseudo-bulk the counts based on sample, group, and cell type
 dataObject.pseudo <- AggregateExpression(

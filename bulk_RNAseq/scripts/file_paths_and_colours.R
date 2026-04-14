@@ -1,6 +1,7 @@
 #----------------- Libraries
 # R version 4.3 was used in for this analysis
 # R/x86_64-pc-linux-gnu-library/4.3
+.libPaths(c("/tgen_labs/jfryer/kolney/R/x86_64-pc-linux-gnu-library/4.3", "/usr/local/lib/R/site-library", "/usr/local/lib/R/library"))
 
 # Tidyverse & General Data Manipulation
 library(tidyverse)      # Includes ggplot2, dplyr, stringr, forcats, etc.
@@ -61,8 +62,26 @@ required_dirs <- c("bulk_RNAseq/results",
                    "bulk_RNAseq/results/PCA",
                    "bulk_RNAseq/results/volcano",
                    "bulk_RNAseq/results/gprofiler",
-                   "bulk_RNAseq/results/manuscript_figures",
-                   "bulk_RNAseq/rObjects/gene_tables")
+                   "bulk_RNAseq/rObjects/gene_tables", 
+                    "snRNAseq/CellChat",
+                    "snRNAseq/CellChat_Ecoli_vs_Saline",
+                    "snRNAseq/DEGs",
+                    "snRNAseq/DoubletFinder",
+                    "snRNAseq/UMAP",
+                    "snRNAseq/UpSet",
+                    "snRNAseq/density",
+                    "snRNAseq/dot_plot",
+                    "snRNAseq/feature",
+                    "snRNAseq/gprofiler",
+                    "snRNAseq/markers",
+                    "snRNAseq/metascape",
+                    "snRNAseq/nuclei_count",
+                    "snRNAseq/pca",
+                    "snRNAseq/scatter",
+                    "snRNAseq/top_transcripts",
+                    "snRNAseq/tree",
+                    "snRNAseq/violin",
+                    "snRNAseq/volcanoes")
 
 # Loop through and create them
 lapply(required_dirs, function(x) if(!dir.exists(x)) dir.create(x, recursive = TRUE))
@@ -94,6 +113,20 @@ fromList <- function (input) {
   # ... Except now it conserves your original value names!
   row.names(data) <- elements
   return(data)
+}
+
+my_seurat_theme <- function() {
+  theme_classic() + # Start with a base theme
+    theme(
+    axis.title.x = element_text(size = 8),
+    axis.text.x = element_text(size = 8),
+    axis.title.y = element_text(size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.title = element_text(size = 8), 
+    legend.text = element_text(size = 8),  
+    plot.title = element_text(size = 8), 
+    theme(legend.position = "none")
+    )
 }
 
 generate_heatmap <- function(go_term, gene_list, DEG_df, top_df) {

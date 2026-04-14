@@ -12,13 +12,12 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 ```
@@ -33,7 +32,7 @@ library(ShinyCell)
 
 # Read RDS 
 ```{r read_pbj}
-dataObject.annotated <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject.annotated <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 # inspect 
 dataObject.annotated
 DefaultAssay(dataObject.annotated) <- "RNA"
@@ -52,6 +51,6 @@ sc.config <- createConfig(obj = dataObject.annotated, meta.to.include = metadata
 makeShinyApp(obj = dataObject.annotated,
              scConf = sc.config, 
              gene.mapping = TRUE,
-             shiny.dir = paste0("../shiny_apps/Ecoli_snRNAseq"),
+             shiny.dir = paste0("snRNAseq/shiny_apps/Ecoli_snRNAseq"),
              shiny.title = paste0("Ecoli & saline pigs"))
 ```

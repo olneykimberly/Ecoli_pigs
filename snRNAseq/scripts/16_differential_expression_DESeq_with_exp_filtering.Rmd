@@ -15,13 +15,12 @@ Differential expression was completed for the following comparisons:
 1.	Ecoli vs saline within each cell type. All samples.\
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 ```
@@ -29,7 +28,7 @@ color.panel <- dittoColors()
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 
 # inspect
 dataObject
@@ -39,7 +38,7 @@ cell_types <- c(unique(dataObject$individual_clusters))
 ```
 
 ```{r protein_coding}
-gene_info <- read.delim("../rObjects/v7_ensembl_protein_coding_genes.txt")
+gene_info <- read.delim("snRNAseq/rObjects/v7_ensembl_protein_coding_genes.txt")
 protein_coding_genes <- subset(gene_info, gene_biotype == "protein_coding")
 ```
 
@@ -51,7 +50,7 @@ table(dataObject$group)
 
 # DESeq all cell type pseudo-bulk
 ```{r DESeq_all_samples}
-output_dir <- "../results/DEGs/DESeq2_pseudobulk_exp_filter"
+output_dir <- "snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter"
 # List of cell types to analyze
 # Pseudo-bulk the counts based on sample, group, sex, time, and cell type
 dataObject.pseudo <- AggregateExpression(
@@ -95,7 +94,7 @@ pseudo_bulk_meta <- dataObject.pseudo@meta.data
         design = ~ group
     )
     dds <- DESeq(dds)
-    res <- results(dds, contrast = c("group", "Saline", "Ecoli"))
+    res <- results(dds, contrast = c("group", "Saline", "Ecoli")) ## swapped because the samples were missed labelled :(
     
     # Calculate pct.1 and pct.2
     pct_data <- calculate_percentages(filtered_counts, factor(pseudo_bulk_meta$group))
@@ -122,7 +121,7 @@ rm(dds, res, DEGs) # clean up
 ```{r DESeq_all_samples}
 info <- (dataObject@meta.data)
 
-output_dir <- "../results/DEGs/DESeq2_pseudobulk_exp_filter"
+output_dir <- "snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter"
 # List of cell types to analyze
 cell_types <- c(unique(dataObject$individual_clusters))
 # Pseudo-bulk the counts based on sample, group, and cell type
@@ -212,7 +211,7 @@ dataObject.pseudo <- RunPCA(dataObject.pseudo, features = VariableFeatures(objec
 # Step 6: Visualize PCA
 DimPlot(dataObject.pseudo, reduction = "pca", label = TRUE) + NoLegend()
 
-pdf(paste0("../results/pca/PMI_DESeq2_psuedobulk_cell_type.pdf"), height = 5, width = 6.5)
+pdf(paste0("snRNAseq/results/pca/PMI_DESeq2_psuedobulk_cell_type.pdf"), height = 5, width = 6.5)
 DimPlot(dataObject.pseudo, reduction = "pca", group.by = "individual_clusters")
 dev.off()
 

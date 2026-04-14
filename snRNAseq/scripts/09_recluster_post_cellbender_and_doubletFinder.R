@@ -1,16 +1,15 @@
 ## ----setup, include=FALSE--------------------------------------------------------------------------------------------
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 
 ## ----echo=FALSE, message=FALSE---------------------------------------------------------------------------------------
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender"
 color.panel <- dittoColors()
 set.seed(28)
 
 ## ----read_object-----------------------------------------------------------------------------------------------------
 # read object
-dataObject.annotated <- readRDS(paste0("../rObjects/",projectID,"_annotated_before_recluster.rds"))
+dataObject.annotated <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated_before_recluster.rds"))
 # inspect
 dataObject.annotated
 # Split by cell type 
@@ -89,7 +88,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.astrocyte,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_astrocyte.pdf"
   ),
   width = 7,
@@ -104,7 +103,7 @@ dot_ind <- DotPlot(dataObject.astrocyte,
                    cluster.idents = FALSE,
                    dot.scale = 8) + RotatedAxis()
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_astrocyte.pdf"
   ),
   width = 14,
@@ -113,7 +112,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.astrocyte, paste0("../rObjects/",projectID,"_astrocyte.rds"))
+saveRDS(dataObject.astrocyte, paste0("snRNAseq/rObjects/",projectID,"_astrocyte.rds"))
 
 
 ## ----oligodendrocyte-------------------------------------------------------------------------------------------------
@@ -149,7 +148,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.oligodendrocyte,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_oligodendrocyte.pdf"
   ),
   width = 7,
@@ -165,7 +164,7 @@ dot_ind <- DotPlot(dataObject.oligodendrocyte,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_oligodendrocyte.pdf"
   ),
   width = 14,
@@ -174,7 +173,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.oligodendrocyte, paste0("../rObjects/",projectID,"_oligodendrocyte.rds"))
+saveRDS(dataObject.oligodendrocyte, paste0("snRNAseq/rObjects/",projectID,"_oligodendrocyte.rds"))
 
 
 ## ----polydendrocyte--------------------------------------------------------------------------------------------------
@@ -210,7 +209,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.polydendrocyte,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_polydendrocyte.pdf"
   ),
   width = 7,
@@ -227,7 +226,7 @@ dot_ind <- DotPlot(dataObject.polydendrocyte,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_polydendrocyte.pdf"
   ),
   width = 14,
@@ -236,7 +235,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.polydendrocyte, paste0("../rObjects/",projectID,"_polydendrocyte.rds"))
+saveRDS(dataObject.polydendrocyte, paste0("snRNAseq/rObjects/",projectID,"_polydendrocyte.rds"))
 
 ## ----endothelial-----------------------------------------------------------------------------------------------------
 # transform
@@ -271,7 +270,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.endothelial,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_endothelial.pdf"
   ),
   width = 7,
@@ -285,7 +284,7 @@ dot_ind <- DotPlot(dataObject.endothelial,
                     cluster.idents = TRUE,
                     dot.scale = 8) + RotatedAxis()
 pdf(
-   paste0("../results/dot_plot/reclusters/",
+   paste0("snRNAseq/results/dot_plot/reclusters/",
           projectID, "_recluster_endothelial.pdf"
    ),
    width = 14,
@@ -294,7 +293,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.endothelial, paste0("../rObjects/",projectID,"_endothelial.rds"))
+saveRDS(dataObject.endothelial, paste0("snRNAseq/rObjects/",projectID,"_endothelial.rds"))
 
 
 ## ----fibroblast------------------------------------------------------------------------------------------------------
@@ -330,7 +329,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.fibroblast,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_fibroblast.pdf"
   ),
   width = 7,
@@ -345,7 +344,7 @@ dot_ind <- DotPlot(dataObject.fibroblast,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_fibroblast.pdf"
   ),
   width = 14,
@@ -354,7 +353,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.fibroblast, paste0("../rObjects/",projectID,"_fibroblast.rds"))
+saveRDS(dataObject.fibroblast, paste0("snRNAseq/rObjects/",projectID,"_fibroblast.rds"))
 
 ## ----mural-----------------------------------------------------------------------------------------------------------
 # transform
@@ -389,7 +388,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.mural,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_mural.pdf"
   ),
   width = 7,
@@ -405,7 +404,7 @@ dot_ind <- DotPlot(dataObject.mural,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_mural.pdf"
   ),
   width = 14,
@@ -414,7 +413,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.mural, paste0("../rObjects/",projectID,"_mural.rds"))
+saveRDS(dataObject.mural, paste0("snRNAseq/rObjects/",projectID,"_mural.rds"))
 
 ## ----microglia-------------------------------------------------------------------------------------------------------
 # transform
@@ -449,7 +448,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.microglia,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_microglia.pdf"
   ),
   width = 7,
@@ -466,7 +465,7 @@ dot_ind <- DotPlot(dataObject.microglia,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_microglia.pdf"
   ),
   width = 14,
@@ -475,7 +474,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.microglia, paste0("../rObjects/",projectID,"_microglia.rds"))
+saveRDS(dataObject.microglia, paste0("snRNAseq/rObjects/",projectID,"_microglia.rds"))
 
 ## ----neuron----------------------------------------------------------------------------------------------------------
 # transform
@@ -510,7 +509,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.neuron,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_neuron.pdf"
   ),
   width = 7,
@@ -526,7 +525,7 @@ dot_ind <- DotPlot(dataObject.neuron,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_neuron.pdf"
   ),
   width = 14,
@@ -535,7 +534,7 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.neuron, paste0("../rObjects/",projectID,"_neuron.rds"))
+saveRDS(dataObject.neuron, paste0("snRNAseq/rObjects/",projectID,"_neuron.rds"))
 
 ## ----ependyma----------------------------------------------------------------------------------------------------------
 # transform
@@ -570,7 +569,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.ependyma,
                            labels.highlight = TRUE)
 ditto_umap
 pdf(
-  paste0("../results/UMAP/reclusters/",
+  paste0("snRNAseq/results/UMAP/reclusters/",
          projectID, "_recluster_ependyma.pdf"
   ),
   width = 7,
@@ -586,7 +585,7 @@ dot_ind <- DotPlot(dataObject.ependyma,
                    dot.scale = 8) + RotatedAxis()
 dot_ind
 pdf(
-  paste0("../results/dot_plot/reclusters/",
+  paste0("snRNAseq/results/dot_plot/reclusters/",
          projectID, "_recluster_ependyma.pdf"
   ),
   width = 14,
@@ -595,4 +594,4 @@ pdf(
 dot_ind
 dev.off()
 
-saveRDS(dataObject.ependyma, paste0("../rObjects/",projectID,"_ependyma.rds"))
+saveRDS(dataObject.ependyma, paste0("snRNAseq/rObjects/",projectID,"_ependyma.rds"))

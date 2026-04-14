@@ -1,15 +1,14 @@
 ## ----setup, include=FALSE--------------------------------------------------------------------------------------------
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 
 ## ----echo=FALSE, message=FALSE---------------------------------------------------------------------------------------
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender"
 color.panel <- dittoColors()
 
 
 ## ----read_object-----------------------------------------------------------------------------------------------------
-dataObject.dirty <- readRDS(paste0("../rObjects/",projectID,"_dirty.rds"))
+dataObject.dirty <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_dirty.rds"))
 
 # Visualize the number of cell counts per sample
 data <- as.data.frame(table(dataObject.dirty$Sample_ID))
@@ -28,7 +27,7 @@ ncells <- ggplot(data, aes(x = Sample_ID, y = frequency, fill = Sample_ID)) +
   ggtitle("Removed dirty: nuclei per sample") +
   theme(legend.position =  "none") + 
   theme(axis.text.x = element_text(angle = 45, hjust=1))
-path <- paste0("../results/nuclei_count/",projectID, 
+path <- paste0("snRNAseq/results/nuclei_count/",projectID, 
                "_cells_per_sample_post_QC_and_doublets_removed_unannotated_after_recluster_dirty_nuclei")
 ncells
 saveToPDF(paste0(path, ".pdf"), width = 10, height = 6)
@@ -81,7 +80,7 @@ Idents(dataObject.dirty) <- dataObject.dirty$SCT_snn_res.0.9
 dataObject.dirty$seurat_clusters <- dataObject.dirty$SCT_snn_res.0.9
 
 # Save 
-saveRDS(dataObject.dirty, paste0("../rObjects/",projectID,"_merged_reclusters_dirty_SCTransform.rds"))
+saveRDS(dataObject.dirty, paste0("snRNAseq/rObjects/",projectID,"_merged_reclusters_dirty_SCTransform.rds"))
 
 
 ditto_umap <- dittoDimPlot(object = dataObject.dirty,
@@ -94,7 +93,7 @@ ditto_umap <- dittoDimPlot(object = dataObject.dirty,
 ditto_umap
 pdf(
   paste0(
-    "../results/UMAP/unannotated/",
+    "snRNAseq/results/UMAP/unannotated/",
     projectID,
     "_individual_clusters_dirty_UMAP.pdf"
   ),
@@ -116,7 +115,7 @@ ditto_umap_anno
 
 pdf(
   paste0(
-    "../results/UMAP/annotated/",
+    "snRNAseq/results/UMAP/annotated/",
     projectID,
     "_individual_clusters_dirty_UMAP.pdf"
   ),
@@ -171,11 +170,9 @@ dot_ind_celltype <- DotPlot(dataObject.dirty,
 dot_ind_celltype
 pdf(
   paste0(
-    "../results/dot_plot/",
+    "snRNAseq/results/dot_plot/",
     projectID,
     "_individual_clusters_dirty.pdf"
   ),width = 10, height = 4)
 dot_ind_celltype
 dev.off()
-
-

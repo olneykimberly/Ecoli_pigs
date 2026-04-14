@@ -1,22 +1,18 @@
 ## ----setup, include=FALSE-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 
 ## ----echo=FALSE, message=FALSE------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender"
 color.panel <- dittoColors()
 
-
 ## ----read_object--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # read object
-dataObject <- readRDS(file = paste0("../rObjects/", projectID, "_filtered.rds"))
-
+dataObject <- readRDS(file = paste0("snRNAseq/rObjects/", projectID, "_filtered.rds"))
 
 ## ----split_object-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # split object by sample
 dataObject.split <- SplitObject(dataObject, split.by = "sample") 
-
 
 ## ----doubletFinder, message=FALSE, warning=FALSE------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 for (i in 1:length(dataObject.split)) {
@@ -79,7 +75,7 @@ for (i in 1:length(dataObject.split)) {
   table(DF_class)
   
   # table showing the number of doublets and singlets
-  write.table(table(DF_class), paste0("../results/DoubletFinder/",projectID, "_doubletFinder_table_",sampleID), sep = "\t", 
+  write.table(table(DF_class), paste0("snRNAseq/results/DoubletFinder/",projectID, "_doubletFinder_table_",sampleID), sep = "\t", 
               row.names = FALSE, quote = FALSE)
   pigs_sample@meta.data[,"CellTypes_DF"] <- DF_class
   
@@ -87,7 +83,7 @@ for (i in 1:length(dataObject.split)) {
   d2 <- DimPlot(pigs_sample, group.by="CellTypes_DF", reduction="umap",
           order=c("Coll.Duct.TC","Doublet"), 
           cols=c("#66C2A5","black"))
-  path <- paste0("../results/DoubletFinder/",projectID,
+  path <- paste0("snRNAseq/results/DoubletFinder/",projectID,
                "_doubletFinder_UMAP_",sampleID)
   pdf(paste0(path, ".pdf"), width = 5,height = 4)
   print(d2)
@@ -101,7 +97,7 @@ for (i in 1:length(dataObject.split)) {
             pt.size = 0.4, 
             order = TRUE,
             label = TRUE)
-  path <- paste0("../results/DoubletFinder/",projectID,
+  path <- paste0("snRNAseq/results/DoubletFinder/",projectID,
                "_doubletFinder_FeaturePlot_",sampleID)
   pdf(paste0(path, ".pdf"), width = 10, height = 7)
   print(f1)
@@ -135,7 +131,7 @@ for (i in 1:length(dataObject.split)) {
   row.names(difference) <- c("difference")
   cbind(difference, ncells_per_cluster)
   write.table(ncells_per_cluster, paste0(
-    "../results/DoubletFinder/",projectID,
+    "snRNAseq/results/DoubletFinder/",projectID,
     "_doubletFinder_table_ncells_per_cluster_",sampleID, ".txt"), sep = "\t", 
     row.names = FALSE, quote = FALSE)
   # plot the number of cells in each cluster per and post doubletFinder
@@ -154,7 +150,7 @@ for (i in 1:length(dataObject.split)) {
     ggtitle("Number of cells per cluster") +  xlab("cluster") +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     scale_y_continuous(limits = c(0,cellmax))
-  path <- paste0("../results/DoubletFinder/",projectID,
+  path <- paste0("snRNAseq/results/DoubletFinder/",projectID,
                "_doubletFinder_barplot_ncells_per_cluster_",sampleID)
   pdf(paste0(path, ".pdf"), width = 7,height = 5)
   print(b1)
@@ -166,7 +162,7 @@ for (i in 1:length(dataObject.split)) {
             pt.size = 0.4, 
             order = TRUE,
             label = TRUE)
-  path <- paste0("../results/DoubletFinder/",projectID,
+  path <- paste0("snRNAseq/results/DoubletFinder/",projectID,
                "_doubletFinder_FeaturePlot_singlets_",sampleID)
   pdf(paste0(path, ".pdf"), width = 10,height = 7)
   print(f2)
@@ -188,8 +184,8 @@ dataObject.singlets <- merge(x = dataObject.split[[1]],
 print(paste0(dim(dataObject)[2] - dim(dataObject.singlets)[2]," nuclie removed"))
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-saveRDS(dataObject.singlets, paste0("../rObjects/",projectID,"_singlets.rds"))
-dataObject.singlets <- readRDS(paste0("../rObjects/",projectID,"_singlets.rds"))
+saveRDS(dataObject.singlets, paste0("snRNAseq/rObjects/",projectID,"_singlets.rds"))
+dataObject.singlets <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_singlets.rds"))
 dataObject.singlets
 dataObject <- dataObject.singlets
 
@@ -221,7 +217,7 @@ dataObject <- FindClusters(object = dataObject,
                                  algorithm = 1, # 1= Louvain
                                  resolution = seq(0.2,1,by=0.2))
 
-saveRDS(dataObject, paste0("../rObjects/",projectID,"_unannotated_doublets_removed.rds"))
+saveRDS(dataObject, paste0("snRNAseq/rObjects/",projectID,"_unannotated_doublets_removed.rds"))
 
 ## ----umap_noDoublets----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Idents(dataObject) <- dataObject$SCT_snn_res.0.6
@@ -248,7 +244,7 @@ umap0.4
 
 ## ----save_umap_noDoublets-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # save
-path <- paste0("../results/UMAP/unannotated/",projectID,
+path <- paste0("snRNAseq/results/UMAP/unannotated/",projectID,
                "_UMAP_unannotated_doublets_removed")
 ditto_umap
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6.6)
@@ -283,7 +279,7 @@ sample_ncells <- FetchData(dataObject,
   dplyr::count(ident,sample) %>%
   tidyr::spread(ident, n)
 write.table(sample_ncells, 
-            paste0("../results/nuclei_count/",
+            paste0("snRNAseq/results/nuclei_count/",
                    projectID, 
                    "_nuclei_per_cluster_doublets_removed.txt"),
             quote = FALSE, sep = "\t")
@@ -340,7 +336,7 @@ dot_ind
 ## ----save_dot_individual, echo=FALSE------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 pdf(
   paste0(
-    "../results/dot_plot/",
+    "snRNAseq/results/dot_plot/",
     projectID,
     "_clusters_DotPlot_no_integration_doublets_removed.pdf"
   ),
@@ -352,7 +348,7 @@ dev.off()
 
 
 ## ----save_object,echo=FALSE,eval=TRUE-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-saveRDS(dataObject, paste0("../rObjects/",projectID,"_unannotated_doublets_removed_harmony_int.rds"))
+saveRDS(dataObject, paste0("snRNAseq/rObjects/",projectID,"_unannotated_doublets_removed_harmony_int.rds"))
 
 
 ## -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

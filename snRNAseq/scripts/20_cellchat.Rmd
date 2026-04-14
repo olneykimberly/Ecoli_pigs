@@ -12,13 +12,12 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 library(NatParksPalettes)
@@ -28,30 +27,13 @@ library(ComplexHeatmap)
 library(BiocNeighbors)
 library(CellChat)
 library(NMF)
-library(ggalluvial)
-#BiocManager::install("BiocNeighbors")
-#devtools::install_github("jinworks/CellChat")
-
-
-my_seurat_theme <- function() {
-  theme_classic() + # Start with a base theme
-    theme(
-    axis.title.x = element_text(size = 8),
-    axis.text.x = element_text(size = 8),
-    axis.title.y = element_text(size = 8),
-    axis.text.y = element_text(size = 8),
-    legend.title = element_text(size = 8), 
-    legend.text = element_text(size = 8),  
-    plot.title = element_text(size = 8), 
-    theme(legend.position = "none")
-    )
-}
+library(ggalluvial) #devtools::install_github("jinworks/CellChat")
 ```
 
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 
 # inspect
 dataObject
@@ -156,7 +138,7 @@ par(mfrow = c(1,2), xpd=TRUE)
 netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
 netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
 
-path <- paste0("../results/CellChat/aggregated_cellcell_communication_network_circle")
+path <- paste0("snRNAseq/results/CellChat/aggregated_cellcell_communication_network_circle")
 saveToPDF(paste0(path, ".pdf"), width = 8, height = 4.5)
 ```
 
@@ -170,7 +152,7 @@ for (i in 1:nrow(mat)) {
   netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat), title.name = rownames(mat)[i])
 }
 
-path <- paste0("../results/CellChat/celltype_cellcell_communication_network")
+path <- paste0("snRNAseq/results/CellChat/celltype_cellcell_communication_network")
 saveToPDF(paste0(path, ".pdf"), width = 14, height = 8)
 ```
 # Part III - Visualization of cell-cell communication network
@@ -229,7 +211,7 @@ for (i in 1:length(pathways.show.all)) {
   netVisual(cellchat, signaling = pathways.show.all[i],  vertex.receiver = vertex.receiver, layout = "hierarchy")
   # Compute and visualize the contribution of each ligand-receptor pair to the overall signaling pathway
   gg <- netAnalysis_contribution(cellchat, signaling = pathways.show.all[i])
-  ggsave(filename=paste0("../results/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 6, height = 5, units = 'in', dpi = 300)
+  ggsave(filename=paste0("snRNAseq/results/CellChat/",pathways.show.all[i], "_L-R_contribution.pdf"), plot=gg, width = 6, height = 5, units = 'in', dpi = 300)
 }
 ```
 
@@ -246,7 +228,7 @@ CellChat can also show all the significant interactions mediated by L-R pairs an
 cell_types <- levels(cellchat@idents)
 
 # Define the base path for saving the plots
-base_path <- "../results/CellChat/"
+base_path <- "snRNAseq/results/CellChat/"
 
 for (i in seq_along(cell_types)) {
   current_source_index <- i
@@ -283,7 +265,7 @@ Similar to Bubble plot, CellChat provides a function netVisual_chord_gene for dr
 Two special cases: one is showing all the interactions sending from one cell groups and the other is showing all the interactions received by one cell group. show the interactions inputted by USERS or certain signaling pathways defined by USERS
 ```{r}
 # Define the base path for saving the Chord diagrams
-base_path <- "../results/CellChat/"
+base_path <- "snRNAseq/results/CellChat/"
 
 # Loop through each cell type to set it as 'sources.use'
 for (i in seq_along(cell_types)) {
@@ -321,7 +303,7 @@ By default, plotGeneExpression only shows the expression of signaling genes rela
 ```{r}
 # Get the list of unique signaling pathways
 pathway_names <- unique(df.net$pathway_name)
-base_path <- "../results/CellChat/"
+base_path <- "snRNAseq/results/CellChat/"
 for (pathway in pathway_names) {
   clean_pathway_name <- gsub("[^A-Za-z0-9_]", "_", pathway)
   file_name <- paste0(base_path, "violin_plot_gene_expression_", (clean_pathway_name), ".pdf")
@@ -371,7 +353,7 @@ for (pathway in pathway_names) {
 # Signaling role analysis on the aggregated cell-cell communication network from all signaling pathways
 gg1 <- netAnalysis_signalingRole_scatter(cellchat)
 
-file_name <- ("../results/CellChat/aggregated_cellcell_communication_network_2D.pdf")
+file_name <- ("snRNAseq/results/CellChat/aggregated_cellcell_communication_network_2D.pdf")
 pdf(file_name, width = 5, height = 3.5) 
 gg1
 dev.off()
@@ -390,7 +372,7 @@ ht1 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "outgoing")
 ht2 <- netAnalysis_signalingRole_heatmap(cellchat, pattern = "incoming")
 ht1 + ht2
 
-file_name <- ("../results/CellChat/aggregated_cellcell_communication_network_heatmap.pdf")
+file_name <- ("snRNAseq/results/CellChat/aggregated_cellcell_communication_network_heatmap.pdf")
 pdf(file_name, width = 12, height = 10) 
 ht1 + ht2
 dev.off()
@@ -401,45 +383,45 @@ Identify global communication patterns to explore how multiple cell types and si
 ### (A)  Identify and visualize outgoing and incoming communication pattern of  cells
 ```{r}
 ## outgoing 
-file_name <- ("../results/CellChat/global_outgoing_Cophenetic_and_Silhouette_values.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_outgoing_Cophenetic_and_Silhouette_values.pdf")
 pdf(file_name, width = 8, height = 5) 
 selectK(cellchat, pattern = "outgoing")
 dev.off()
 
 nPatterns = 4
-file_name <- ("../results/CellChat/global_outgoing_communication_pattern_heatmap.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_outgoing_communication_pattern_heatmap.pdf")
 pdf(file_name, width = 11, height = 12.5) 
 cellchat <- identifyCommunicationPatterns(cellchat, pattern = "outgoing", k = nPatterns,  width = 10, height = 12, font.size = 8)
 dev.off()
 
-file_name <- ("../results/CellChat/global_outgoing_communication_pattern_river.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_outgoing_communication_pattern_river.pdf")
 pdf(file_name, width = 9, height = 10) 
 netAnalysis_river(cellchat, pattern = "outgoing")
 dev.off()
 
-file_name <- ("../results/CellChat/global_outgoing_communication_pattern_dotplot.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_outgoing_communication_pattern_dotplot.pdf")
 pdf(file_name, width = 10, height = 5) 
 netAnalysis_dot(cellchat, pattern = "outgoing")
 dev.off()
 
 ## incoming 
-file_name <- ("../results/CellChat/global_incoming_Cophenetic_and_Silhouette_values.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_incoming_Cophenetic_and_Silhouette_values.pdf")
 pdf(file_name, width = 8, height = 5) 
 selectK(cellchat, pattern = "incoming")
 dev.off()
 
 nPatterns = 5
-file_name <- ("../results/CellChat/global_incoming_communication_pattern_heatmap.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_incoming_communication_pattern_heatmap.pdf")
 pdf(file_name, width = 11, height = 12.5) 
 cellchat <- identifyCommunicationPatterns(cellchat, pattern = "incoming", k = nPatterns,  width = 10, height = 12, font.size = 8)
 dev.off()
 
-file_name <- ("../results/CellChat/global_incoming_communication_pattern_river.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_incoming_communication_pattern_river.pdf")
 pdf(file_name, width = 9, height = 10) 
 netAnalysis_river(cellchat, pattern = "incoming")
 dev.off()
 
-file_name <- ("../results/CellChat/global_incoming_communication_pattern_dotplot.pdf")
+file_name <- ("snRNAseq/results/CellChat/global_incoming_communication_pattern_dotplot.pdf")
 pdf(file_name, width = 10, height = 5) 
 netAnalysis_dot(cellchat, pattern = "incoming")
 dev.off()
@@ -447,6 +429,6 @@ dev.off()
 
 ## Save 
 ```{r save}
-saveRDS(cellchat, file = "../rObjects/cellchat_snRNA_EcoliPigs.rds")
-cellchat <- readRDS("../rObjects/cellchat_snRNA_EcoliPigs.rds")
+saveRDS(cellchat, file = "snRNAseq/rObjects/cellchat_snRNA_EcoliPigs.rds")
+cellchat <- readRDS("snRNAseq/rObjects/cellchat_snRNA_EcoliPigs.rds")
 ```

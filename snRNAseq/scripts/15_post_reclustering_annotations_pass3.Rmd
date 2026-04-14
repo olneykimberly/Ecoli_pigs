@@ -13,13 +13,12 @@ editor_options:
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
 color.panel <- dittoColors()
 ```
@@ -27,7 +26,7 @@ color.panel <- dittoColors()
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/",projectID,".rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,".rds"))
 
 # inspect
 dataObject
@@ -49,7 +48,7 @@ ncells <- ggplot(data, aes(x = Sample_ID, y = frequency, fill = Sample_ID)) +
   scale_y_continuous(breaks = seq(0,25000, by = 5000), limits = c(0,25000)) +
   ggtitle("Nuclei per sample") +
   theme(legend.position =  "none") 
-path <- paste0("../results/nuclei_count/",projectID, 
+path <- paste0("snRNAseq/results/nuclei_count/",projectID, 
                "_cells_per_sample")
 ncells
 saveToPDF(paste0(path, ".pdf"), width = 5, height = 3)
@@ -86,7 +85,7 @@ ditto_umap <- dittoDimPlot(object = dataObject,
 ditto_umap
 pdf(
   paste0(
-    "../results/UMAP/unannotated/",
+    "snRNAseq/results/UMAP/unannotated/",
     projectID,
     ".pdf"
   ),width = 8, height = 6)
@@ -144,7 +143,7 @@ tree <- dataObject@tools$BuildClusterTree
 tree$tip.label <- paste0("Cluster ", tree$tip.label)
 nClusters <- length(tree$tip.label)
 
-path <- paste0("../results/tree/",projectID,
+path <- paste0("snRNAseq/results/tree/",projectID,
                "_UMAP_unannotated")
 pdf(paste0(path, ".pdf"), width = 6, height = 4)
 tree_graph <- ggtree::ggtree(tree, aes(x, y)) +
@@ -171,24 +170,24 @@ markers <- SeuratWrappers::RunPrestoAll(
   only.pos = FALSE
 )
 write.table(markers, 
-            paste0("../results/markers/", projectID, "_markers.tsv"),
+            paste0("snRNAseq/results/markers/", projectID, "_markers.tsv"),
             quote = FALSE,
             row.names = FALSE)
-saveRDS(markers, paste0("../rObjects/", projectID, "_markers.rds"))
-markers <- readRDS(paste0("../rObjects/", projectID,"_markers.rds"))
+saveRDS(markers, paste0("snRNAseq/rObjects/", projectID, "_markers.rds"))
+markers <- readRDS(paste0("snRNAseq/rObjects/", projectID,"_markers.rds"))
 
 # rearrange to order by cluster & filter to only include log2FC > 1 & FDR < 0.05
  all.markers.strict <- markers %>%
    group_by(cluster) %>%
    dplyr::filter(avg_log2FC > 1 & p_val_adj < 0.05)
 
-saveRDS(all.markers.strict, paste0("../rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
-all.markers.strict <- readRDS(paste0("../rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
+saveRDS(all.markers.strict, paste0("snRNAseq/rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
+all.markers.strict <- readRDS(paste0("snRNAseq/rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
 ```
 
 ```{r load_markers}
-markers <- readRDS(paste0("../rObjects/", projectID,"_markers.rds"))
-all.markers.strict <- readRDS(paste0("../rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
+markers <- readRDS(paste0("snRNAseq/rObjects/", projectID,"_markers.rds"))
+all.markers.strict <- readRDS(paste0("snRNAseq/rObjects/", projectID,"_markers_log2FC1_q0.01.rds"))
 ```
 
 # Dot plot
@@ -237,7 +236,7 @@ dot_ind_celltype <- DotPlot(dataObject,
 dot_ind_celltype
 pdf(
   paste0(
-    "../results/dot_plot/",
+    "snRNAseq/results/dot_plot/",
     projectID,
     ".pdf"
   ),width = 10, height = 10)
@@ -271,7 +270,7 @@ umap_feature <-
               features = c("TYROBP", "MOG", "AQP4", "RBFOX3"))
 umap_feature
 
-path <- paste0("../results/UMAP/unannotated/",projectID,
+path <- paste0("snRNAseq/results/UMAP/unannotated/",projectID,
                "_UMAP_unannotated_celltype_markers")
 umap_feature
 saveToPDF(paste0(path, ".pdf"), width = 10, height = 10)
@@ -803,7 +802,7 @@ dataObject.annotated <- RenameIdents(object = dataObject,
                                "24" = "oligodendrocyte")
 dataObject.annotated$individual_clusters <- factor(Idents(dataObject.annotated))
 
-path <- paste0("../results/UMAP/annotated/",projectID,
+path <- paste0("snRNAseq/results/UMAP/annotated/",projectID,
                "_UMAP_annotated")
 pdf(paste0(path, ".pdf"), width = 7.5, height = 6.5)
 UMAP_ind <- dittoDimPlot(object = dataObject.annotated,
@@ -854,7 +853,7 @@ count_bar
 ```{r nuclei_count_individual, echo=FALSE}
 pdf(
   paste0(
-    "../results/UMAP/annotated/",
+    "snRNAseq/results/UMAP/annotated/",
     projectID,
     "_individual_clusters_nuclei_count.pdf"
   ),
@@ -872,7 +871,7 @@ count_per_cluster <- FetchData(dataObject.annotated,
   dplyr::count(ident, Sample_ID) %>%
   tidyr::spread(ident, n)
 count_per_cluster
-write.table(count_per_cluster, paste0("../results/UMAP/annotated/",
+write.table(count_per_cluster, paste0("snRNAseq/results/UMAP/annotated/",
     projectID,
     "_individual_clusters_nuclei_count_per_sample.txt"), sep="\t", quote=FALSE, row.names = FALSE)
 ```
@@ -929,7 +928,7 @@ dot_ind
 ```{r save_dot_individual, echo=FALSE}
 pdf(
   paste0(
-    "../results/dot_plot/",
+    "snRNAseq/results/dot_plot/",
     projectID,
     "_clusters_DotPlot_annotation.pdf"
   ),
@@ -963,7 +962,7 @@ rel_abun
 
 pdf(
   paste0(
-    "../results/UMAP/annotated/",
+    "snRNAseq/results/UMAP/annotated/",
     projectID,
     "_clusters_relative_abundance_Sample_ID.pdf"
   ),
@@ -994,7 +993,7 @@ rel_abun
 
 pdf(
   paste0(
-    "../results/UMAP/annotated/",
+    "snRNAseq/results/UMAP/annotated/",
     projectID,
     "_clusters_relative_abundance_group.pdf"
   ),
@@ -1007,6 +1006,5 @@ dev.off()
 
 # Save RDS 
 ```{r save_annotations}
-saveRDS(dataObject.annotated, paste0("../rObjects/", projectID, "_annotated.rds"))
+saveRDS(dataObject.annotated, paste0("snRNAseq/rObjects/", projectID, "_annotated.rds"))
 ```
-
