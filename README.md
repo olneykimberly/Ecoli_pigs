@@ -103,7 +103,8 @@ cd /snRNAseq/scripts/
 conda activate cellbender_py38 # this contains the cellbender tool
 ```
 
-### create config file for snakemake pipeline to align the reads and remove ambient RNA
+### Create config file for snakemake pipeline to align the reads and remove ambient RNA
+Snakemake for taking raw fastq files and obtaining cell counts
 ```
 sh 00_rename_fastq_files.sh
 sh 01_get_read_info.sh
@@ -112,6 +113,8 @@ sh 03_run_Snakefile.sh # must update to your HPC job submission system
 ```
 
 The counts adjusted single nucleus count data from Cellbender was then imported into R v4.3.0 using the Seurat v5.0.2 package for quality filtering, dimensionality reduction, clustering, QC, differential expression, and cellchat analysis. R scripts 04 through 21. 
+
+### Seurat data processing, differential expression and cellchatv2 analysis
 ```{r}
 # create object and process data 
 04_create_seurat_object_and_quality_control_checks_cellbender.Rmd
@@ -134,13 +137,14 @@ The counts adjusted single nucleus count data from Cellbender was then imported 
 17_make_cellshiny.Rmd # make shiny app 
 18_make_DEG_excel_and_volcano_plots_DESeq_exp_filter.Rmd # DEG tabls
 
-# 19 and 20 were exploratory, only 21 was used for the manuscript
+# 19 and 20 were exploratory, 21 was used for the manuscript
 19_recluster_clean_cell_types.R
 20_cellchat.Rmd
 21_cellchat_comparison_betwee_Ecoli_vs_Saline.Rmd
 ```
 
 ### Scripts used to make the figures for the manuscript are located in manuscript_figure_scripts
+Main and supplemental figures were created in R
 ```
 01_Manuscript_Main_Figures.Rmd  
 02_Figure_DEG_overlap_panels.R  
