@@ -1,7 +1,7 @@
 ---
 title: "shiny"
 author: "Kimberly Olney, PhD"
-date: "March 2025"
+date: "April 2026"
 output:
   html_document:
     theme: cerulean
@@ -25,25 +25,148 @@ color.panel <- dittoColors()
 # Libraries & paths
 ```{r libraries_variables}
 library(ggdendro)
-library(reticulate, lib.loc = "/usr/local/lib/R/site-library")
+library(reticulate)
 library(ShinyCell)
+library(dplyr)
+library(tibble)
+library(plyr)
 ```
-
 
 # Read RDS 
 ```{r read_pbj}
 dataObject.annotated <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
-# inspect 
-dataObject.annotated
+```
+```{r}
+# =========================================================
+# 1. Swap the incorrect Sample_ID values in the Seurat object
+# =========================================================
+sample_renaming_map <- c(
+  "E1" = "S1",
+  "E4" = "S2",
+  "E6" = "S3",
+  "E8" = "S6",
+  "S1" = "E1",
+  "S2" = "E4",
+  "S3" = "E6",
+  "S6" = "E8"
+)
+
+dataObject.annotated$Sample_ID <- plyr::mapvalues(
+  x = as.character(dataObject.annotated$Sample_ID),
+  from = names(sample_renaming_map),
+  to = unname(sample_renaming_map),
+  warn_missing = FALSE
+)
+
+# Keep 'sample' synchronized with Sample_ID
+dataObject.annotated$sample <- dataObject.annotated$Sample_ID
+
+# =========================================================
+# 2. Prepare metadata table
+# =========================================================
+metadata2 <- metadata %>%
+  mutate(sample = as.character(sample))
+
+# Confirm one row per sample
+stopifnot(!anyDuplicated(metadata2$sample))
+
+# =========================================================
+# 3. Define which sample-level columns to import
+# =========================================================
+sample_level_cols_to_add <- c(
+  "sample",
+  "sample_ID",
+  "group",
+  "condition",
+  "pig_id",
+  "dose_ml_per_hr",
+  "weight_kg",
+  "age_days",
+  "duration_min",
+  "start_heart_rate",
+  "end_heart_rate",
+  "start_temp",
+  "end_temp",
+  "sex",
+  "start_SpO2",
+  "end_SpO2",
+  "start_MAP",
+  "end_MAP"
+)
+
+sample_level_cols_to_add <- intersect(sample_level_cols_to_add, colnames(metadata2))
+
+sample_lookup <- metadata2 %>%
+  dplyr::select(all_of(sample_level_cols_to_add))
+
+# =========================================================
+# 4. Remove outdated sample-level columns from Seurat metadata
+# =========================================================
+meta <- dataObject.annotated@meta.data %>%
+  rownames_to_column("cell_barcode")
+
+cols_to_drop <- intersect(sample_level_cols_to_add, colnames(meta))
+meta <- meta %>% dplyr::select(-all_of(cols_to_drop))
+
+# =========================================================
+# 5. Join corrected sample-level metadata back by Sample_ID
+# =========================================================
+meta <- meta %>%
+  left_join(sample_lookup, by = c("Sample_ID" = "sample"))
+
+# Recreate sample so it exactly matches Sample_ID in the object
+meta$sample <- meta$Sample_ID
+
+# =========================================================
+# 6. Sanity checks
+# =========================================================
+if (any(is.na(meta$group))) {
+  unmatched <- unique(meta$Sample_ID[is.na(meta$group)])
+  stop(
+    paste0(
+      "These Sample_ID values in the Seurat object did not match metadata$sample: ",
+      paste(unmatched, collapse = ", ")
+    )
+  )
+}
+
+# Optional consistency checks
+cat("\nSample_ID by group after update:\n")
+print(table(meta$Sample_ID, meta$group))
+
+# =========================================================
+# 7. Put corrected metadata back into Seurat object
+# =========================================================
+meta <- meta %>% column_to_rownames("cell_barcode")
+dataObject.annotated@meta.data <- meta
+
+# =========================================================
+# 8. Verify final result
+# =========================================================
+cat("\nUpdated Sample_ID counts:\n")
+print(table(dataObject.annotated$Sample_ID))
+
+cat("\nUpdated sample counts:\n")
+print(table(dataObject.annotated$sample))
+
+cat("\nUpdated group counts:\n")
+print(table(dataObject.annotated$group))
+
+cat("\nUpdated Sample_ID by group:\n")
+print(table(dataObject.annotated$Sample_ID, dataObject.annotated$group))
+```
+
+```{r}
 DefaultAssay(dataObject.annotated) <- "RNA"
 dataObject.annotated <- NormalizeData(dataObject.annotated)
+saveRDS(dataObject.annotated, "snRNAseq/rObjects/Ecoli_pigs_snRNA_object.rds")
 ```
 
 
 ```{r reorder_metadata}
-metadata <- colnames(dataObject.annotated@meta.data)
-metadata <- metadata[c(38,1:6, 13, 42)]
-sc.config <- createConfig(obj = dataObject.annotated, meta.to.include = metadata)
+metadata_sn <- colnames(dataObject.annotated@meta.data)
+metadata_sn <- metadata_sn[c(1,36,4,2,3,11,50:65)]
+sc.config <- createConfig(obj = dataObject.annotated, meta.to.include = metadata_sn)
 ```
 
 # Output directory
@@ -51,6 +174,6 @@ sc.config <- createConfig(obj = dataObject.annotated, meta.to.include = metadata
 makeShinyApp(obj = dataObject.annotated,
              scConf = sc.config, 
              gene.mapping = TRUE,
-             shiny.dir = paste0("snRNAseq/shiny_apps/Ecoli_snRNAseq"),
+             shiny.dir = paste0("snRNAseq/shiny_apps/Ecoli_snRNAseq_Olney_et_al_2026"),
              shiny.title = paste0("Ecoli & saline pigs"))
 ```
