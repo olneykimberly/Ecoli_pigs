@@ -1,32 +1,8 @@
-# 1. Install/Load required for conversion if not present
-library(ggplotify)
-library(readxl)
-library(dplyr)
-library(purrr)
-library(VennDiagram)
-library(ggplot2)
-library(tidyr)
-library(ggpubr)
-library(openxlsx)
-
-getwd()
-
-my_seurat_theme <- function() {
-  theme_classic() + 
-    theme(
-      axis.title.x = element_blank(),
-      axis.text.x  = element_text(size = 8, angle = 45, hjust = 1),
-      axis.title.y = element_text(size = 8),
-      axis.text.y  = element_text(size = 8),
-      legend.title = element_text(size = 8), 
-      legend.text  = element_text(size = 8),  
-      plot.title   = element_text(size = 8),
-      legend.position = "none"
-    )
-}
+knitr::opts_knit$set(root.dir = ".")
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
 
 # --- 2. Data Processing ---
-bulk_data <- read_excel("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/results/DEGs/DEGs.q1.00.xlsx")
+bulk_data <- read_excel("bulk_RNAseq/results/DEGs/DEGs.q1.00.xlsx")
 
 # Make bulk DEG table unique by gene so all downstream counts are gene-level
 bulk_deg_df <- bulk_data %>%
@@ -47,7 +23,7 @@ bulk_deg_df <- bulk_data %>%
 
 bulk_degs <- unique(bulk_deg_df$gene)
 
-sn_path   <- "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline.xlsx"
+sn_path   <- "snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/Ecoli_vs_Saline.xlsx"
 sn_sheets <- excel_sheets(sn_path)
 
 # Keep one row per CellType-gene pair
@@ -273,4 +249,4 @@ list_of_datasets <- list(
 
 list_of_datasets <- c(list_of_datasets, sn_deg_dfs)
 
-write.xlsx(list_of_datasets, file = "Sepsis_Pig_Transcriptome_Full_Comparison.xlsx")
+write.xlsx(list_of_datasets, file = "manuscript_figures/Sepsis_Pig_Transcriptome_Full_Comparison.xlsx")

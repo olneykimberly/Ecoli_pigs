@@ -23,11 +23,13 @@ library(dittoSeq)
 library(variancePartition)
 
 # Visualization & Graphics
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(scales)
 library(ggrepel)
-library(ggpubr)
 library(gplots)
 library(RColorBrewer)
-library(scales)
 library(gridExtra)
 library(grid)
 library(lattice)
@@ -35,6 +37,13 @@ library(grDevices)
 library(purrr)
 library(reshape)
 library(ggforce)
+library("readxl")
+library(patchwork) 
+library(ggpubr)
+library(gridExtra)
+library(ggplotify)
+library(NatParksPalettes)
+color.panel <- dittoColors()
 
 # Utilities & Development
 library(openxlsx)
@@ -48,6 +57,7 @@ library(harmony)
 library(SeuratWrappers)
 library(dittoSeq)
 library(DoubletFinder)
+
 
 #----------------- Create folder outputs
 # Create directory structure if it doesn't exist
@@ -63,25 +73,25 @@ required_dirs <- c("bulk_RNAseq/results",
                    "bulk_RNAseq/results/volcano",
                    "bulk_RNAseq/results/gprofiler",
                    "bulk_RNAseq/rObjects/gene_tables", 
-                    "snRNAseq/CellChat",
-                    "snRNAseq/CellChat_Ecoli_vs_Saline",
-                    "snRNAseq/DEGs",
-                    "snRNAseq/DoubletFinder",
-                    "snRNAseq/UMAP",
-                    "snRNAseq/UpSet",
-                    "snRNAseq/density",
-                    "snRNAseq/dot_plot",
-                    "snRNAseq/feature",
-                    "snRNAseq/gprofiler",
-                    "snRNAseq/markers",
-                    "snRNAseq/metascape",
-                    "snRNAseq/nuclei_count",
-                    "snRNAseq/pca",
-                    "snRNAseq/scatter",
-                    "snRNAseq/top_transcripts",
-                    "snRNAseq/tree",
-                    "snRNAseq/violin",
-                    "snRNAseq/volcanoes")
+                   "snRNAseq/results/CellChat",
+                   "snRNAseq/results/CellChat_Ecoli_vs_Saline",
+                    "snRNAseq/results/DEGs",
+                    "snRNAseq/results/DoubletFinder",
+                    "snRNAseq/results/UMAP",
+                    "snRNAseq/results/UpSet",
+                    "snRNAseq/results/density",
+                    "snRNAseq/results/dot_plot",
+                    "snRNAseq/results/feature",
+                    "snRNAseq/results/gprofiler",
+                    "snRNAseq/results/markers",
+                    "snRNAseq/results/metascape",
+                    "snRNAseq/results/nuclei_count",
+                    "snRNAseq/results/pca",
+                    "snRNAseq/results/scatter",
+                    "snRNAseq/results/top_transcripts",
+                    "snRNAseq/results/tree",
+                    "snRNAseq/results/violin",
+                    "snRNAseq/results/volcanoes")
 
 # Loop through and create them
 lapply(required_dirs, function(x) if(!dir.exists(x)) dir.create(x, recursive = TRUE))

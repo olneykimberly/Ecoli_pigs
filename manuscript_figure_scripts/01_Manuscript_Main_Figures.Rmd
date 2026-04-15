@@ -23,64 +23,25 @@ Large: approximately 7.09 inches x 8.66 inches
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
-projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
-color.panel <- dittoColors()
-library(NatParksPalettes)
-library("readxl")
-library(patchwork) 
-library(ggpubr)
-library(gridExtra)
-library(patchwork)
-library(ggplotify)
-#library(magick)
-
-
-my_seurat_theme <- function() {
-  theme_classic() + # Start with a base theme
-    theme(
-    axis.title.x = element_text(size = 8),
-    axis.text.x = element_text(size = 8),
-    axis.title.y = element_text(size = 8),
-    axis.text.y = element_text(size = 8),
-    legend.title = element_text(size = 8), 
-    legend.text = element_text(size = 8),  
-    plot.title = element_text(size = 8), 
-    theme(legend.position = "none")
-    )
-}
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
+projectID <- "Ecoli_pigs_snRNA_object"
 ```
 
 # Read in object
 ```{r read_object}
 # read object
-dataObject <- readRDS(paste0("../rObjects/",projectID,"_annotated.rds"))
+dataObject <- readRDS(paste0("snRNAseq/rObjects/",projectID,"_annotated.rds"))
 
 # inspect
 dataObject
 Layers(dataObject)
 # List of cell types to analyze
 cell_types <- c(unique(dataObject$individual_clusters))
-
-
-group_renaming_map <- c(
-  "Ecoli" = "Saline",
-  "Saline" = "Ecoli"
-)
-
-# 3. Apply the renaming to your specified metadata column
-# Make sure to replace 'your_group_column_name' with the actual column name.
-dataObject$group <- plyr::mapvalues(
-  x = dataObject$group,
-  from = names(group_renaming_map),
-  to = unname(group_renaming_map)
-)
 
 # 4. Verify the changes
 unique(table(dataObject$group))
@@ -92,7 +53,7 @@ unique(table(dataObject$group))
 allComparisons <- c("Ecoli_vs_Saline")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../../bulk_RNAseq/results/DEGs/", i,"_q1.00.txt"))
+    read.delim(paste0("bulk_RNAseq/results/DEGs/", i,"_q1.00.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
   max <- nrow(group1_vs_group2)
@@ -259,14 +220,14 @@ bulk_vol_plot
 up_enrich_results <-
   read_excel(
     paste0(
-      "../../bulk_RNAseq/results/metascape/bulk_up/metascape_result.xlsx"
+      "bulk_RNAseq/results/metascape/bulk_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../../bulk_RNAseq/results/metascape/bulk_down/metascape_result.xlsx"
+      "bulk_RNAseq/results/metascape/bulk_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -440,7 +401,7 @@ figure1 <-
   font.label = list(size = 10)
     )
 figure1
-path <- paste0("../manuscript_figures/Figure_1_bulk")
+path <- paste0("manuscript_figures/Figure_1_bulk")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 7)
 ```
 
@@ -609,7 +570,7 @@ dot_ind
 #     nrow = 2
 #     )
 # Option1
-# path <- paste0("../manuscript_figures/Figure_2_umap_rel_abun_dotplot")
+# path <- paste0("snRNAseq/manuscript_figures/Figure_2_umap_rel_abun_dotplot")
 # saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 
 
@@ -624,7 +585,7 @@ Option1 <-
   font.label = list(size = 10)
     )
 Option1
-path <- paste0("../manuscript_figures/Figure_2_umap_dotplot_updated")
+path <- paste0("manuscript_figures/Figure_2_umap_dotplot")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 5.25)
 ```
 
@@ -656,7 +617,6 @@ endo_HSPH1 <- FeaturePlot(object = subset(dataObject, individual_clusters == "en
                  my_seurat_theme()
 
 endo_HSPH1_theme <- endo_HSPH1 & my_seurat_theme() 
-
 ```
 
 
@@ -666,7 +626,7 @@ endo_HSPH1_theme <- endo_HSPH1 & my_seurat_theme()
 allComparisons <- c("endothelial")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -837,14 +797,14 @@ endo_vol_plot
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/endothelial_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/endothelial_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/endothelial_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/endothelial_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1104,7 +1064,7 @@ figure3 <-
     heights = c(1, 1.5)
     )
 figure3
-path <- paste0("../manuscript_figures/Figure_3_endothelial")
+path <- paste0("manuscript_figures/Figure_3_endothelial")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 ```
 
@@ -1117,7 +1077,7 @@ saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 allComparisons <- c("mural")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -1288,14 +1248,14 @@ mural_vol_plot
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/mural_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/mural_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/mural_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/mural_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1555,7 +1515,7 @@ figure3 <-
     heights = c(1, 1.5)
     )
 figure3
-path <- paste0("../manuscript_figures/Figure_4_mural")
+path <- paste0("manuscript_figures/Figure_4_mural")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 ```
 
@@ -1566,7 +1526,7 @@ saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 allComparisons <- c("microglia")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -1737,14 +1697,14 @@ microglia_vol_plot
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/microglia_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/microglia_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/microglia_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/microglia_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -2004,14 +1964,14 @@ figure5 <-
     heights = c(1, 1.5)
     )
 figure5
-path <- paste0("../manuscript_figures/Figure_5_microglia")
+path <- paste0("manuscript_figures/Figure_5_microglia")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 ```
 
 # Figure 6 cellchat
 ```{r}
-#load("../rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
-#load("../rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
+#load("snRNAseq/rObjects/cellchat_merged_Ecoli_Saline_pigs.RData")
+#load("snRNAseq/rObjects/cellchat_object.list_Ecoli_Saline_pigs.RData")
 
 # Convert to ggplot-compatible object
 gg1 <- netVisual_heatmap(cellchat)
@@ -2058,7 +2018,7 @@ dev.off()
 # Step 3: Read the image and convert to ggplot-compatible object
 Ecoli_plot <- as.ggplot(image_read(tmp_file))
 Ecoli_plot
-path <- paste0("../manuscript_figures/Ecoli_plot")
+path <- paste0("manuscript_figures/Ecoli_plot")
 saveToPDF(paste0(path, ".pdf"), width = 3.5, height = 3)
 
 # Step 1: Create temporary image file
@@ -2073,7 +2033,7 @@ dev.off()
 # Step 3: Read the image and convert to ggplot-compatible object
 Saline_plot <- as.ggplot(image_read(tmp_file))
 Saline_plot
-path <- paste0("../manuscript_figures/Saline_plot")
+path <- paste0("manuscript_figures/Saline_plot")
 saveToPDF(paste0(path, ".pdf"), width = 12, height = 12)
 
 row1 <-
@@ -2103,7 +2063,7 @@ figure6 <-
     heights = c(1.25, 2)
     )
 figure6
-path <- paste0("../manuscript_figures/Figure_6_cellchat_V2")
+path <- paste0("manuscript_figures/Figure_6_cellchat")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 ```
 

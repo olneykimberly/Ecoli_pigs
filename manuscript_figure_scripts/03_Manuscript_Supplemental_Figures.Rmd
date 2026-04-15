@@ -23,38 +23,13 @@ Large: approximately 7.09 inches x 8.66 inches
 
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/scripts/")
+knitr::opts_knit$set(root.dir = ".")
 ```
 
 # Libraris, paths, colors
 ```{r echo=FALSE, message=FALSE}
-source(here::here("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts/", "file_paths_and_colours.R"))
-projectID <- "pigs_cellbender_after_recluster_harm_int_noise_removed_after_annotation_FINAL"
-color.panel <- dittoColors()
-library(NatParksPalettes)
-library("readxl")
-library(patchwork) 
-library(ggpubr)
-library(gridExtra)
-library(patchwork)
-library(ggplotify)
-library(magick)
-
-
-my_seurat_theme <- function() {
-  theme_classic() + # Start with a base theme
-    theme(
-    axis.title.x = element_text(size = 8),
-    axis.text.x = element_text(size = 8),
-    axis.title.y = element_text(size = 8),
-    axis.text.y = element_text(size = 8),
-    legend.title = element_text(size = 8), 
-    legend.text = element_text(size = 8),  
-    plot.title = element_text(size = 8), 
-    theme(legend.position = "none")
-    )
-}
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
+projectID <- "Ecoli_pigs_snRNA_object"
 ```
 
 # Read in object
@@ -67,24 +42,8 @@ dataObject
 Layers(dataObject)
 # List of cell types to analyze
 cell_types <- c(unique(dataObject$individual_clusters))
-
-
-group_renaming_map <- c(
-  "Ecoli" = "Saline",
-  "Saline" = "Ecoli"
-)
-
-# 3. Apply the renaming to your specified metadata column
-# Make sure to replace 'your_group_column_name' with the actual column name.
-dataObject$group <- plyr::mapvalues(
-  x = dataObject$group,
-  from = names(group_renaming_map),
-  to = unname(group_renaming_map)
-)
-
-# 4. Verify the changes
-unique(dataObject$group)
 ```
+
 # Supplemental Figure 3 - other cell types volcaneos, and metascape  
 ## a)
 ### astrocyte
@@ -93,7 +52,7 @@ unique(dataObject$group)
 allComparisons <- c("astrocyte")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -263,7 +222,7 @@ astrocyte_vol_plot
 allComparisons <- c("oligodendrocyte")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -433,7 +392,7 @@ oligodendrocyte_vol_plot
 allComparisons <- c("opc")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -603,7 +562,7 @@ opc_vol_plot
 allComparisons <- c("VLMC")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -772,7 +731,7 @@ VLMC_vol_plot
 allComparisons <- c("neuron")
 for (i in allComparisons) {
   group1_vs_group2 <-
-    read.delim(paste0("../results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
+    read.delim(paste0("snRNAseq/results/DEGs/DESeq2_pseudobulk_exp_filter/", i,"_Ecoli_vs_Saline_comparison_pseudobulk.txt"))
     i <- gsub("_", " ", i)
   color_values <- vector()
     group1_vs_group2 <- na.omit(group1_vs_group2)
@@ -835,14 +794,14 @@ neuron_vol_plot
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/astrocyte_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/astrocyte_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/astrocyte_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/astrocyte_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1038,14 +997,14 @@ rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_result
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/VLMC_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/VLMC_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/VLMC_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/VLMC_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1196,14 +1155,14 @@ rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_result
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/oligodendrocyte_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/oligodendrocyte_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/oligodendrocyte_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/oligodendrocyte_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1376,14 +1335,14 @@ rm(up_and_down_enrich_plot,  up_and_down_enrich_results_subset, up_enrich_result
 up_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/opc_up/metascape_result.xlsx"
+      "snRNAseq/results/metascape/opc_up/metascape_result.xlsx"
     ), sheet = 2
   )
 
 down_enrich_results <-
   read_excel(
     paste0(
-      "../results/metascape/opc_down/metascape_result.xlsx"
+      "snRNAseq/results/metascape/opc_down/metascape_result.xlsx"
     ), sheet = 2
   )
 
@@ -1558,7 +1517,7 @@ supplementalFigure3 <-
     heights = c(1, 1.15)
     )
 supplementalFigure3
-path <- paste0("../manuscript_figures/Supplemental_figure_3")
+path <- paste0("manuscript_figures/Supplemental_figure_3")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 6)
 ```
 
@@ -1604,7 +1563,7 @@ supplementalFigure4 <-
     heights = c(1, 1,1)
     )
 supplementalFigure4
-path <- paste0("../manuscript_figures/Supplemental_figure_4")
+path <- paste0("manuscript_figures/Supplemental_figure_4")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 8)
 ```
 

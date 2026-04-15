@@ -3,7 +3,7 @@ Bulk and single nucleus RNAseq of Sus scrofa (pigs) that received either saline 
 
 The goal of this experiment is to identify differentially expressed genes (DEGs) between experimental groups.  Pigs were injected with saline (control) or Escherichia coli  (E. coli) to model sepsis.  Brain cotrex samples were collected and sent for bulk RNA and single nucleus RNA sequencing.
 
-Explore gene expresison in our published shiny apps: [single nucleus](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/) and [bulk RNAseq](https://fryerlab.shinyapps.io/Ecoli_snRNAseq/)
+Explore gene expresison in our interactive viewers: [single nucleus](https://fryerlab.shinyapps.io/ecoli_pigs_snRNA/) and [bulk RNAseq](https://rpubs.com/olneykimberly/Ecoli_vs_Saline.)
 
 | Sample     | Group   | 
 | -----------|:-------:|
@@ -112,9 +112,40 @@ sh 03_run_Snakefile.sh # must update to your HPC job submission system
 ```
 
 The counts adjusted single nucleus count data from Cellbender was then imported into R v4.3.0 using the Seurat v5.0.2 package for quality filtering, dimensionality reduction, clustering, QC, differential expression, and cellchat analysis. R scripts 04 through 21. 
+```{r}
+# create object and process data 
+04_create_seurat_object_and_quality_control_checks_cellbender.Rmd
+05_doublet_removal_post_cellbender.R
+06_SCTransform_joinlayers_cellbender.R
+07_find_markers_pass1.R
+08_cellbender_doublets_removed_SCTransform_annotations.Rmd
+09_recluster_post_cellbender_and_doubletFinder.R
+10_merge_recluster_clean.R
+10_merge_recluster_dirty.R
+11_find_markers_pass2.R
+12_post_reclustering_annotations.Rmd
+13_recluster_post_annotations.Rmd
+14_find_markers_pass3.R
+
+# final annotations with the clean object
+15_post_reclustering_annotations_pass3.Rmd
+# differential expression 
+16_differential_expression_DESeq_with_exp_filtering.Rmd
+17_make_cellshiny.Rmd # make shiny app 
+18_make_DEG_excel_and_volcano_plots_DESeq_exp_filter.Rmd # DEG tabls
+
+# 19 and 20 were exploratory, only 21 was used for the manuscript
+19_recluster_clean_cell_types.R
+20_cellchat.Rmd
+21_cellchat_comparison_betwee_Ecoli_vs_Saline.Rmd
+```
 
 ### Scripts used to make the figures for the manuscript are located in manuscript_figure_scripts
 ```
+01_Manuscript_Main_Figures.Rmd  
+02_Figure_DEG_overlap_panels.R  
+03_Manuscript_Supplemental_Figures.Rmd  
+04_Manuscript_Supplemental_Metascape_MultiGeneList.R
 ```
 
 ## Contacts

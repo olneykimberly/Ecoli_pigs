@@ -1,37 +1,8 @@
-library(ggplot2)
-library(reshape2)
-library(dplyr)
-library(forcats)
-library(scales)
-setwd("/tgen_labs/jfryer/kolney/Ecoli_pigs/bulk_RNAseq/scripts")
+source("bulk_RNAseq/scripts/file_paths_and_colours.R")
+projectID <- "Ecoli_pigs_snRNA_object"
+
 
 # --- 1. Setup and Themes ---
-
-# Define the user-provided theme
-my_seurat_theme <- function() {
-  theme_classic() + 
-    theme(
-      axis.title.x = element_text(size = 8),
-      axis.text.x = element_text(size = 8, angle = 270, vjust = 0.5, hjust = 0),
-      axis.title.y = element_text(size = 8),
-      axis.text.y = element_text(size = 8),
-      legend.title = element_text(size = 8), 
-      legend.text = element_text(size = 8),  
-      plot.title = element_text(size = 8),
-      legend.position = "right"
-    )
-}
-
-# Helper to shrink legend size
-addSmallLegend <- function(my_plot, pointSize = 3, textSize = 6, spaceLegend = .5) {
-  my_plot +
-    guides(shape = guide_legend(override.aes = list(size = pointSize)),
-           color = guide_legend(override.aes = list(size = pointSize))) +
-    theme(legend.title = element_text(size = textSize), 
-          legend.text  = element_text(size = textSize),
-          legend.key.size = unit(spaceLegend, "lines"))
-}
-
 # Define the consistent cell type order
 cell_type_order <- c("microglia","astrocyte", "oligodendrocyte", "opc", "endothelial", "mural", "VLMC")
 
@@ -61,7 +32,7 @@ process_metascape_heatmap <- function(file_path, direction_suffix) {
 
 # --- 2. Upregulated Heatmap (A) ---
 
-up_path <- "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/results/metascape/multi_input_up/Enrichment_heatmap/HeatmapSelectedGO.csv"
+up_path <- "snRNAseq/results/metascape/multi_input_up/Enrichment_heatmap/HeatmapSelectedGO.csv"
 up_data <- process_metascape_heatmap(up_path, "up")
 
 heatmap_up <- ggplot(up_data, aes(variable, Description, fill = plot_value)) + 
@@ -81,7 +52,7 @@ heatmap_up <- addSmallLegend(heatmap_up)
 
 # --- 3. Downregulated Heatmap (B) ---
 
-down_path <- "/tgen_labs/jfryer/kolney/Ecoli_pigs/snRNAseq/results/metascape/multi_input_down/Enrichment_heatmap/HeatmapSelectedGO.csv"
+down_path <- "snRNAseq/results/metascape/multi_input_down/Enrichment_heatmap/HeatmapSelectedGO.csv"
 down_data <- process_metascape_heatmap(down_path, "down")
 
 heatmap_down <- ggplot(down_data, aes(variable, Description, fill = plot_value)) + 
@@ -118,5 +89,5 @@ supplementalFigure <-
     font.label = list(size = 10)
     )
 supplementalFigure
-path <- paste0("../results/manuscript_figures/Supplemental_figure_6_celltypes_metascape")
+path <- paste0("manuscript_figures/Supplemental_figure_6_celltypes_metascape")
 saveToPDF(paste0(path, ".pdf"), width = 7, height = 9)
